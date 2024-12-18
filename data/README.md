@@ -1,5 +1,7 @@
 ### Data description
 
+fecha_servidor = date for day/hour, weeknumber for hour. 
+
 Voltage (V)
 
 Currennt (A)
