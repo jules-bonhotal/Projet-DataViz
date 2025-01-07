@@ -1,0 +1,91 @@
+:root {
+    --primary-color: #ff7f0e;
+    --secondary-color: #1f77b4;
+    --background-light: #ffe3b1;
+    --wrapper-default-bg: #fdf1d1; /* Subtle background color for unselected wrappers */
+  
+    /* Define specific colors for each metric */
+    --voltage-color: #ff5733;
+    --current-color: #33ff57;
+    --power-color: #3375ff;
+    --frequency-color: #ff33a6;
+    --energy-color: #ffdd33;
+    --temperature-color: #33fff2;
+    --power-factor-color: #a633ff;
+    --consumption-color: #ff3333;
+  }
+  
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: var(--background-light);
+  }
+  
+  #checkbox-section {
+    width: 30%;
+    padding: 10px;
+    background: var(--background-light);
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  #checkbox-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+  }
+  
+  #checkbox-section ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  #checkbox-section li {
+    margin-bottom: 8px;
+  }
+  
+  .checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    border-radius: 5px;
+    background-color: var(--wrapper-default-bg); /* Apply subtle background */
+    transition: background-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .checkbox-wrapper.checked {
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  }
+  
+  #voltage-checkbox:checked ~ .checkbox-wrapper {
+    background-color: var(--voltage-color);
+  }
+  
+  #current-checkbox:checked ~ .checkbox-wrapper {
+    background-color: var(--current-color);
+  }
+  
+  #power-checkbox:checked ~ .checkbox-wrapper {
+    background-color: var(--power-color);
+  }
+  
+  #frequency-checkbox:checked ~ .checkbox-wrapper {
+    background-color: var(--frequency-color);
+  }
+  
+  #energy-checkbox:checked ~ .checkbox-wrapper {
+    background-color: var(--energy-color);
+  }
+  
+  #temperature-checkbox:checked ~ .checkbox-wrapper {
+    background-color: var(--temperature-color);
+  }
+  
+  #power-factor-checkbox:checked ~ .checkbox-wrapper {
+    background-color: var(--power-factor-color);
+  }
+  
+  #consumption-checkbox:checked ~ .checkbox-wrapper {
+    background-color: var(--consumption-color);
+  }

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css"/>
+    <title>Data Center Metrics Visualization</title>
+  </head>
+  <body>
+    <div id="checkbox-section">
+      <h3>Select Metrics</h3>
+      <ul>
+        <li>
+          <input type="checkbox" id="voltage-checkbox" />
+          <div class="checkbox-wrapper">
+            <label for="voltage-checkbox">Voltage (V)</label>
+          </div>
+        </li>
+        <li>
+          <input type="checkbox" id="current-checkbox" />
+          <div class="checkbox-wrapper">
+            <label for="current-checkbox">Current (A)</label>
+          </div>
+        </li>
+        <li>
+          <input type="checkbox" id="power-checkbox" />
+          <div class="checkbox-wrapper">
+            <label for="power-checkbox">Power (PA) - Watts (W)</label>
+          </div>
+        </li>
+        <li>
+          <input type="checkbox" id="frequency-checkbox" />
+          <div class="checkbox-wrapper">
+            <label for="frequency-checkbox">Frequency - Hertz (Hz)</label>
+          </div>
+        </li>
+        <li>
+          <input type="checkbox" id="energy-checkbox" />
+          <div class="checkbox-wrapper">
+            <label for="energy-checkbox"
+              >Active Energy - kilowatts per hour (KWh)</label
+            >
+          </div>
+        </li>
+        <li>
+          <input type="checkbox" id="temperature-checkbox" />
+          <div class="checkbox-wrapper">
+            <label for="temperature-checkbox"
+              >ESP32 Temperature - Centigrade Degrees (Â°C)</label
+            >
+          </div>
+        </li>
+        <li>
+          <input type="checkbox" id="power-factor-checkbox" />
+          <div class="checkbox-wrapper">
+            <label for="power-factor-checkbox"
+              >Power Factor - Adimensional</label
+            >
+          </div>
+        </li>
+        <li>
+          <input type="checkbox" id="consumption-checkbox" />
+          <div class="checkbox-wrapper">
+            <label for="consumption-checkbox"
+              >Pourcentages de Consomation</label
+            >
+          </div>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>
