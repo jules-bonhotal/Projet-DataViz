@@ -93,3 +93,132 @@ fs.writeFileSync('week.json', JSON.stringify(filteredData, null, 2), 'utf8');
 
 console.log('Les données filtrées par semaine ont été sauvegardées dans week.json');
 
+// Charger toutes les données des fichiers JSON
+async function loadAllData() {
+  const files = ["data/day.json", "data/hour.json", "data/minute.json", "data/week.json"];
+  const allData = [];
+  for (const file of files) {
+    const response = await fetch(file);
+    const jsonData = await response.json();
+    allData.push(...jsonData);
+  }
+  return allData;
+}
+
+// Obtenir les attributs sélectionnés via les cases à cocher
+function getSelectedAttributes() {
+  const checkboxes = document.querySelectorAll("#checkbox-section input[type='checkbox']");
+  const selectedAttributes = [];
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.checked) {
+      selectedAttributes.push(checkbox.id.replace("-checkbox", ""));
+    }
+  });
+  return selectedAttributes;
+}
+
+// Filtrer les données en fonction des attributs sélectionnés
+function filterDataByAttributes(data, selectedAttributes) {
+  return data.map((entry) => {
+    const filteredEntry = { fecha_servidor: entry.fecha_servidor }; // Toujours inclure la date
+    selectedAttributes.forEach((attr) => {
+      if (entry[attr] !== undefined) {
+        filteredEntry[attr] = entry[attr];
+      }
+    });
+    return filteredEntry;
+  });
+}
+
+// Créer un graphique de lignes avec D3.js
+function createLineChart(filteredData, selectedAttributes) {
+  // Vider l'ancien graphique
+  const chartSection = document.getElementById("line-chart-section");
+  chartSection.innerHTML = "";
+
+  if (filteredData.length === 0 || selectedAttributes.length === 0) {
+    chartSection.innerHTML = "<p>Veuillez sélectionner des métriques pour afficher les données.</p>";
+    return;
+  }
+
+  // Dimensions du graphique
+  const margin = { top: 20, right: 30, bottom: 30, left: 50 };
+  const width = 800 - margin.left - margin.right;
+  const height = 400 - margin.top - margin.bottom;
+
+  // Créer un conteneur SVG
+  const svg = d3
+    .select("#line-chart-section")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Échelle pour l'axe X (date)
+  const x = d3
+    .scaleTime()
+    .domain(d3.extent(filteredData, (d) => new Date(d.fecha_servidor)))
+    .range([0, width]);
+
+  svg
+    .append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x));
+
+  // Échelle pour l'axe Y (valeurs des métriques)
+  const y = d3
+    .scaleLinear()
+    .domain([0, d3.max(filteredData, (d) => d3.max(selectedAttributes.map((attr) => d[attr])) || 0)])
+    .nice()
+    .range([height, 0]);
+
+  svg.append("g").call(d3.axisLeft(y));
+
+  // Ajouter des lignes pour chaque métrique sélectionnée
+  selectedAttributes.forEach((attr, index) => {
+    const line = d3
+      .line()
+      .x((d) => x(new Date(d.fecha_servidor)))
+      .y((d) => y(d[attr]));
+
+    svg
+      .append("path")
+      .datum(filteredData)
+      .attr("fill", "none")
+      .attr("stroke", d3.schemeCategory10[index % 10])
+      .attr("stroke-width", 1.5)
+      .attr("d", line);
+
+    // Ajouter une légende
+    svg
+      .append("text")
+      .attr("x", width - 100)
+      .attr("y", 20 + index * 20)
+      .attr("fill", d3.schemeCategory10[index % 10])
+      .text(attr)
+      .style("font-size", "12px");
+  });
+}
+
+// Initialiser les cases à cocher et la visualisation
+async function initialize() {
+  const data = await loadAllData();
+
+  const updateVisualization = () => {
+    const selectedAttributes = getSelectedAttributes();
+    const filteredData = filterDataByAttributes(data, selectedAttributes);
+    createLineChart(filteredData, selectedAttributes);
+  };
+
+  // Ajouter des écouteurs aux cases à cocher
+  const checkboxes = document.querySelectorAll("#checkbox-section input[type='checkbox']");
+  checkboxes.forEach((checkbox) => {
+    checkbox.addEventListener("change", updateVisualization);
+  });
+
+  // Charger une visualisation initiale vide
+  updateVisualization();
+}
+
+initialize();
