@@ -1,51 +1,32 @@
-// Fonction pour filtrer les données par plage de dates
-function filterDataByDate(startDate, endDate) {
-    // Convertir les dates de début et de fin en objets Date
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+const fs = require('fs');
+
+function filtrerParDate(donnees, dateDebut, dateFin) {
+    const debut = new Date(dateDebut);
+    const fin = new Date(dateFin);
+
+    return donnees.filter(entree => {
+        const dateEntree = new Date(entree.fecha_servidor);
+        return dateEntree >= debut && dateEntree <= fin;
+    });
+}
+
+// Lire et filtrer les données
+fs.readFile('day_S1.json', 'utf8', (err, data) => {
+    if (err) {
+        console.error("Erreur lors de la lecture du fichier :", err);
+        return;
+    }
+
+    // Convertir en JSON
+    const jsonData = JSON.parse(data);
+
+    // Plage de dates
+    const dateDebut = "2021-05-01";
+    const dateFin = "2021-05-31";
 
     // Filtrer les données
-    const filteredData = data.filter(item => {
-        const currentDate = new Date(item.fecha_servidor);
-        return currentDate >= start && currentDate <= end;
-    });
+    const resultatsFiltres = filtrerParDate(jsonData, dateDebut, dateFin);
 
-    // Retourner les données filtrées
-    return filteredData;
-}
-
-// Exemple d'utilisation
-const startDate = "2021-05-05";
-const endDate = "2021-05-10";
-const result = filterDataByDate(startDate, endDate);
-
-// Affichage des résultats dans la console
-console.log("Données filtrées :", result);
-const fs = require("fs");
-
-// Fonction pour filtrer les données
-function filterDataByDate(data, startDate, endDate) {
-  const startTimestamp = new Date(startDate).getTime();
-  const endTimestamp = new Date(endDate).getTime();
-
-  return data.filter((item) => {
-    const itemTimestamp = new Date(item.fecha_servidor).getTime();
-    return itemTimestamp >= startTimestamp && itemTimestamp <= endTimestamp;
-  });
-}
-
-// Charger et traiter les fichiers JSON
-function processFiles(file1Path, file2Path, startDate, endDate) {
-
-  // Filtrer les données
-  const filteredData = filterDataByDate(combinedData, startDate, endDate);
-
-  return filteredData;
-}
-
-// Exemple d'utilisation
-const startDate = "2021-05-05T22:30:00";
-const endDate = "2021-05-06T00:30:00";
-
-const result = processFiles("file1.json", "file2.json", startDate, endDate);
-console.log("Données filtrées :", result);
+    // Afficher les résultats
+    console.log("Données filtrées :", resultatsFiltres);
+});
