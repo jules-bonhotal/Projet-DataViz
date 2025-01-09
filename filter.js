@@ -60,3 +60,36 @@ const filteredData = filterByTimeRange(data, startTime, endTime);
 fs.writeFileSync('filtered_hour.json', JSON.stringify(filteredData, null, 2), 'utf8');
 
 console.log('Les données filtrées ont été sauvegardées dans filtered_hour.json');
+const fs = require('fs');
+
+// Charger le fichier JSON nommé 'hour.json'
+const data = JSON.parse(fs.readFileSync('hour.json', 'utf8'));
+
+// Fonction pour obtenir le numéro de la semaine
+function getWeekNumber(dateString) {
+  const date = new Date(dateString);
+  const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+  const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+  return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+}
+
+// Définir les semaines à filtrer (entre 1 et 52)
+const startWeek = 1;
+const endWeek = 52;
+
+// Filtrer les données par semaines
+function filterByWeekRange(data, startWeek, endWeek) {
+  return data.filter(entry => {
+    const weekNumber = getWeekNumber(entry.fecha_servidor);
+    return weekNumber >= startWeek && weekNumber <= endWeek;
+  });
+}
+
+// Appliquer le filtre
+const filteredData = filterByWeekRange(data, startWeek, endWeek);
+
+// Sauvegarder les résultats filtrés dans un fichier nommé 'week.json'
+fs.writeFileSync('week.json', JSON.stringify(filteredData, null, 2), 'utf8');
+
+console.log('Les données filtrées par semaine ont été sauvegardées dans week.json');
+
