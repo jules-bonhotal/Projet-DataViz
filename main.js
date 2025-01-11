@@ -171,3 +171,176 @@ const updateVisualization = () => {
 document.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
     checkbox.addEventListener("change", updateVisualization);
 });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Donut Chart with Options</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fdf5ce;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            margin: 0;
+            height: 100vh;
+        }
+        .checkbox-section, .options-section {
+            margin-bottom: 20px;
+        }
+        svg {
+            background-color: #fff6dc;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Options pour personnaliser l'affichage -->
+    <div class="options-section">
+        <label>
+            <input type="radio" name="view-option" value="show-values" checked>
+            En affichant leur valeur.
+        </label>
+        <label>
+            <input type="radio" name="view-option" value="hide-values">
+            Sans leur afficher la valeur (uniquement l'ordre).
+        </label>
+        <label>
+            <input type="radio" name="view-option" value="sectors-only">
+            Avec un graphique à secteurs.
+        </label>
+    </div>
+
+    <!-- Checkboxes pour sélectionner les métriques -->
+    <div class="checkbox-section">
+        <label>
+            <input type="checkbox" id="cpu-checkbox" checked>
+            CPU
+        </label>
+        <label>
+            <input type="checkbox" id="ram-checkbox" checked>
+            RAM
+        </label>
+        <label>
+            <input type="checkbox" id="gpu-checkbox" checked>
+            GPU
+        </label>
+    </div>
+
+    <!-- Conteneur pour le graphique -->
+    <div id="donut-chart"></div>
+
+    <script>
+        const path = "./data/hour_S1.json"; // Fichier contenant les données
+
+        // Dimensions et marges
+        const width = 300;
+        const height = 300;
+        const margin = 20;
+        const radius = Math.min(width, height) / 2 - margin;
+
+        // Couleurs pour chaque catégorie
+        const color = d3.scaleOrdinal()
+            .domain(["CPU", "RAM", "GPU"])
+            .range(["#4682b4", "#87ceeb", "#32cd32"]);
+
+        // Fonction pour récupérer les données
+        function fetchData(path) {
+            return fetch(path)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                });
+        }
+
+        // Fonction pour créer un graphique
+        function createDonutChart(containerId, data, option) {
+            // Supprimer l'ancien graphique
+            d3.select(`#${containerId}`).select("svg").remove();
+
+            // Créer le conteneur SVG
+            const svg = d3.select(`#${containerId}`)
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+            // Transformer les données pour D3
+            const pie = d3.pie().value(d => d[1]);
+            const data_ready = pie(Object.entries(data));
+
+            // Créer les arcs
+            const arc = d3.arc()
+                .innerRadius(option === "sectors-only" ? 0 : radius * 0.5) // Rayon intérieur
+                .outerRadius(radius); // Rayon extérieur
+
+            // Ajouter les sections du donut
+            svg.selectAll('path')
+                .data(data_ready)
+                .join('path')
+                .attr('d', arc)
+                .attr('fill', d => color(d.data[0]))
+                .attr("stroke", "black")
+                .style("stroke-width", "1px")
+                .style("opacity", 0.7);
+
+            // Ajouter les labels selon l'option sélectionnée
+            if (option === "show-values") {
+                svg.selectAll('text')
+                    .data(data_ready)
+                    .join('text')
+                    .text(d => `${d.data[0]} ${d.data[1]}%`)
+                    .attr("transform", d => `translate(${arc.centroid(d)})`)
+                    .style("text-anchor", "middle")
+                    .style("font-size", "12px");
+            } else if (option === "hide-values") {
+                svg.selectAll('text')
+                    .data(data_ready)
+                    .join('text')
+                    .text(d => `${d.data[0]}`)
+                    .attr("transform", d => `translate(${arc.centroid(d)})`)
+                    .style("text-anchor", "middle")
+                    .style("font-size", "12px");
+            }
+        }
+
+        // Fonction pour mettre à jour le graphique
+        function updateVisualization() {
+            const selectedData = {};
+            const selectedOption = document.querySelector('input[name="view-option"]:checked').value;
+
+            // Vérifier les métriques sélectionnées
+            if (document.getElementById("cpu-checkbox").checked) {
+                selectedData["CPU"] = 24.7; // Exemple, valeurs à extraire dynamiquement
+            }
+            if (document.getElementById("ram-checkbox").checked) {
+                selectedData["RAM"] = 34.2;
+            }
+            if (document.getElementById("gpu-checkbox").checked) {
+                selectedData["GPU"] = 41.1;
+            }
+
+            // Créer un nouveau graphique avec les données sélectionnées et l'option
+            createDonutChart("donut-chart", selectedData, selectedOption);
+        }
+
+        // Charger les données et initialiser le graphique
+        fetchData(path).then(data => {
+            updateVisualization();
+            document.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+                checkbox.addEventListener("change", updateVisualization);
+            });
+            document.querySelectorAll('input[name="view-option"]').forEach((radio) => {
+                radio.addEventListener("change", updateVisualization);
+            });
+        });
+    </script>
+</body>
+</html>
