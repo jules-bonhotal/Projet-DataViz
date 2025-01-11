@@ -1,4 +1,3 @@
-import "./style.css";
 const path = "./data/hour.json";
 
 /***************Global Variables **********************/
@@ -80,7 +79,7 @@ function createLineChart(containerId, data, valueKey, color) {
       0,
       d3.max(filteredData, function (d) {
         return d.value;
-      })
+      }),
     ])
     .range([height, 0]);
 
@@ -143,9 +142,9 @@ const updateVisualization = () => {
     if (!document.getElementById("chart-power")) {
       chartContainer.append("div").attr("id", "chart-power");
     }
-    fetchData(path).then((data) =>
-      createLineChart("chart-power", data, "potencia", "#3357ff")
-    );
+    fetchData(path).then((data) => {
+      createLineChart("chart-power", data, "potencia", "#3357ff");
+    });
   } else {
     removeLineChart("chart-power");
     d3.select("#chart-power").remove();
@@ -155,9 +154,9 @@ const updateVisualization = () => {
     if (!document.getElementById("chart-frequency")) {
       chartContainer.append("div").attr("id", "chart-frequency");
     }
-    fetchData(path).then((data) =>
-      createLineChart("chart-frequency", data, "frecuencia", "#ff33a6")
-    );
+    fetchData(path).then((data) => {
+      createLineChart("chart-frequency", data, "frecuencia", "#ff33a6");
+    });
   } else {
     removeLineChart("chart-frequency");
     d3.select("#chart-frequency").remove();
@@ -410,20 +409,20 @@ const determineTimeInterval = (start, end) => {
       return {
         interval: d3.timeSecond.every(15), // Show every 15 seconds
         format: d3.timeFormat("%H:%M:%S"),
-        type: "seconds"
+        type: "seconds",
       };
     } else if (duration <= 1000 * 60 * 60) {
       // 1 hour or less
       return {
         interval: d3.timeMinute.every(5), // Show every 5 minutes
         format: d3.timeFormat("%H:%M"),
-        type: "minutes"
+        type: "minutes",
       };
     } else {
       return {
         interval: d3.timeMinute.every(15), // Show every 15 minutes
         format: d3.timeFormat("%H:%M"),
-        type: "minutes"
+        type: "minutes",
       };
     }
   } else if (hours <= 24) {
@@ -431,35 +430,35 @@ const determineTimeInterval = (start, end) => {
     return {
       interval: d3.timeHour.every(1),
       format: d3.timeFormat("%H:%M"),
-      type: "hours"
+      type: "hours",
     };
   } else if (hours <= 24 * 7) {
     // For spans up to a week, show days with hours
     return {
       interval: d3.timeHour.every(6),
       format: d3.timeFormat("%b %d %H:%M"),
-      type: "hours"
+      type: "hours",
     };
   } else if (hours <= 24 * 30) {
     // For spans up to a month, show days
     return {
       interval: d3.timeDay.every(1),
       format: d3.timeFormat("%b %d"),
-      type: "days"
+      type: "days",
     };
   } else if (hours <= 24 * 30 * 3) {
     // For spans up to 3 months, show weeks
     return {
       interval: d3.timeWeek.every(1),
       format: d3.timeFormat("%b %d"),
-      type: "weeks"
+      type: "weeks",
     };
   } else {
     // For longer spans, show months
     return {
       interval: d3.timeMonth.every(1),
       format: d3.timeFormat("%b %Y"),
-      type: "months"
+      type: "months",
     };
   }
 };
