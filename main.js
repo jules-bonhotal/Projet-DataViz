@@ -6,7 +6,7 @@ const state = {
   startTimestamp: new Date("2023-01-01"),
   endTimestamp: new Date("2023-12-31"),
   isDraggingWeeks: false,
-  startWeekIndex: null
+  startWeekIndex: null,
 };
 
 // Chart configuration
@@ -17,7 +17,7 @@ const chartConfig = {
   },
   get height() {
     return 400 - this.margin.top - this.margin.bottom;
-  }
+  },
 };
 
 // Metric definitions
@@ -29,7 +29,7 @@ const metrics = {
   energy: { key: "energia", color: "#ffdd33" },
   temperature: { key: "ESP32_temp", color: "#33fff2" },
   powerFactor: { key: "fp", color: "#a633ff" },
-  consumption: { key: "consumo", color: "#ff33ff" }
+  consumption: { key: "consumo", color: "#ff33ff" },
 };
 
 // Data fetching
@@ -38,6 +38,94 @@ const fetchData = async (path) => {
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();
 };
+
+// Fonction pour extraire les données directement pour le graphique
+function getChartData(data) {
+  const chartData = {
+    CPU: 0,
+    GPU: 0,
+    RAM: 0,
+    unknown: 0,
+  };
+  let count = 0;
+  data.forEach((entry) => {
+    // Only include entries where the power values are not 0
+    if (
+      entry.WORKSTATION_CPU_POWER > 0 &&
+      entry.WORKSTATION_GPU_POWER > 0 &&
+      entry.WORKSTATION_RAM_POWER > 0
+    ) {
+      chartData.CPU += entry.WORKSTATION_CPU_POWER || 0;
+      chartData.GPU += entry.WORKSTATION_GPU_POWER || 0;
+      chartData.RAM += entry.WORKSTATION_RAM_POWER || 0;
+      count++;
+    }
+  });
+  if (count > 0) {
+    chartData.CPU = Math.round(chartData.CPU / count);
+    chartData.GPU = Math.round(chartData.GPU / count);
+    chartData.RAM = Math.round(chartData.RAM / count);
+  }
+  chartData.unknown = Math.max(
+    0,
+    Math.round(100 - chartData.CPU - chartData.GPU - chartData.RAM)
+  );
+  return chartData;
+}
+
+function createPieChart(containerId, data, colors) {
+  const width = 300;
+  const height = 300;
+  const margin = 20;
+  const radius = Math.min(width, height) / 2 - margin;
+
+  // Remove existing chart
+  d3.select(`#${containerId}`).select("svg").remove();
+
+  // Create SVG container
+  const svg = d3
+    .select(`#${containerId}`)
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+  // Set up colors
+  const color = d3.scaleOrdinal().range(colors);
+
+  // Convert data to pie chart format
+  const pie = d3.pie().value((d) => d[1]); // d[1] corresponds to the value
+  const data_ready = pie(Object.entries(data)); // Use Object.entries instead of d3.entries
+
+  // Define arc
+  const arc = d3
+    .arc()
+    .innerRadius(radius * 0.5)
+    .outerRadius(radius);
+
+  // Add arcs
+  svg
+    .selectAll("path")
+    .data(data_ready)
+    .enter()
+    .append("path")
+    .attr("d", arc)
+    .attr("fill", (d) => color(d.data[0])) // d.data[0] corresponds to the key
+    .attr("stroke", "white")
+    .style("stroke-width", "2px");
+
+  // Add labels
+  svg
+    .selectAll("text")
+    .data(data_ready)
+    .enter()
+    .append("text")
+    .text((d) => `${d.data[0]}: ${d.data[1]}%`) // d.data[0] is key, d.data[1] is value
+    .attr("transform", (d) => `translate(${arc.centroid(d)})`)
+    .style("text-anchor", "middle")
+    .style("font-size", "12px");
+}
 
 // Chart creation
 const createLineChart = (containerId, data, valueKey, color) => {
@@ -72,7 +160,7 @@ const createLineChart = (containerId, data, valueKey, color) => {
   const parsedData = data
     .map((d) => ({
       date: d3.timeParse("%Y-%m-%dT%H:%M:%S")(d.fecha_servidor),
-      value: +d[valueKey]
+      value: +d[valueKey],
     }))
     .filter((_, i) => i % 10 === 0);
 
@@ -135,18 +223,18 @@ const timeUtils = {
         ? {
             interval: d3.timeSecond.every(15),
             format: d3.timeFormat("%H:%M:%S"),
-            type: "seconds"
+            type: "seconds",
           }
         : duration <= 1000 * 60 * 60
         ? {
             interval: d3.timeMinute.every(5),
             format: d3.timeFormat("%H:%M"),
-            type: "minutes"
+            type: "minutes",
           }
         : {
             interval: d3.timeMinute.every(15),
             format: d3.timeFormat("%H:%M"),
-            type: "minutes"
+            type: "minutes",
           };
     }
 
@@ -154,32 +242,32 @@ const timeUtils = {
       return {
         interval: d3.timeHour.every(1),
         format: d3.timeFormat("%H:%M"),
-        type: "hours"
+        type: "hours",
       };
     if (hours <= 24 * 7)
       return {
         interval: d3.timeHour.every(6),
         format: d3.timeFormat("%b %d %H:%M"),
-        type: "hours"
+        type: "hours",
       };
     if (hours <= 24 * 30)
       return {
         interval: d3.timeDay.every(1),
         format: d3.timeFormat("%b %d"),
-        type: "days"
+        type: "days",
       };
     if (hours <= 24 * 30 * 3)
       return {
         interval: d3.timeWeek.every(1),
         format: d3.timeFormat("%b %d"),
-        type: "weeks"
+        type: "weeks",
       };
     return {
       interval: d3.timeMonth.every(1),
       format: d3.timeFormat("%b %Y"),
-      type: "months"
+      type: "months",
     };
-  }
+  },
 };
 
 // Timeline creation
@@ -499,7 +587,7 @@ const createTimeGrid = () => {
     "Sep",
     "Oct",
     "Nov",
-    "Dec"
+    "Dec",
   ];
 
   const monthContainers = {};
@@ -596,7 +684,16 @@ const renderSystem = {
           if (!document.getElementById(chartId)) {
             d3.select("#line-chart-section").append("div").attr("id", chartId);
           }
-          createLineChart(chartId, data, config.key, config.color);
+          /************** AJOUT **************/
+          if (chartId === "chart-consumption") {
+            const chartData = getChartData(data);
+            // Appeler directement la fonction `createPieChart`
+            const colors = ["#4CAF50", "#2196F3", "#FFC107", "#808080"];
+            createPieChart("chart-consumption", chartData, colors);
+          } else {
+            createLineChart(chartId, data, config.key, config.color);
+          }
+          /************** FIN AJOUT **************/
         } else {
           d3.select(`#${chartId}`).remove();
         }
@@ -657,7 +754,7 @@ const renderSystem = {
     });
 
     this.updateAll();
-  }
+  },
 };
 
 // Event handlers
@@ -676,107 +773,3 @@ const initialize = () => {
 };
 
 initialize();
-function createPieChart(containerId, data, colors) {
-  const width = 300;
-  const height = 300;
-  const margin = 20;
-  const radius = Math.min(width, height) / 2 - margin;
-
-  // Remove existing chart
-  d3.select(`#${containerId}`).select("svg").remove();
-
-  // Create SVG container
-  const svg = d3
-    .select(`#${containerId}`)
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .append("g")
-    .attr("transform", `translate(${width / 2}, ${height / 2})`);
-
-  // Set up colors
-  const color = d3.scaleOrdinal().range(colors);
-
-  // Convert data to pie chart format
-  const pie = d3.pie().value((d) => d[1]); // d[1] corresponds to the value
-  const data_ready = pie(Object.entries(data)); // Use Object.entries instead of d3.entries
-
-  // Define arc
-  const arc = d3
-    .arc()
-    .innerRadius(radius * 0.5)
-    .outerRadius(radius);
-
-  // Add arcs
-  svg
-    .selectAll("path")
-    .data(data_ready)
-    .enter()
-    .append("path")
-    .attr("d", arc)
-    .attr("fill", (d) => color(d.data[0])) // d.data[0] corresponds to the key
-    .attr("stroke", "white")
-    .style("stroke-width", "2px");
-
-  // Add labels
-  svg
-    .selectAll("text")
-    .data(data_ready)
-    .enter()
-    .append("text")
-    .text((d) => `${d.data[0]}: ${d.data[1]}%`) // d.data[0] is key, d.data[1] is value
-    .attr("transform", (d) => `translate(${arc.centroid(d)})`)
-    .style("text-anchor", "middle")
-    .style("font-size", "12px");
-}
-
-// Function to update visualization
-function updateVisualization() {
-  console.log("Updateing PieChart");
-  const chartContainer = d3.select("#chart-section");
-
-  if (document.getElementById("consumption-checkbox").checked) {
-    if (!document.getElementById("chart-consumption")) {
-      chartContainer.append("div").attr("id", "chart-consumption");
-    }
-
-    // Fetch data from JSON and create pie chart
-    fetchData(path)
-      .then((data) => {
-        const pieData = [
-          {
-            fecha_servidor: "2021-11-27T19:00:00",
-            voltaje: 118.96550895991132,
-            corriente: 1.0538038056530574,
-            frecuencia: 59.95874745981896,
-            energia: 223.3232774801404,
-            fp: 0.8996046554590801,
-            ESP32_temp: 51.620863088860155,
-            WORKSTATION_CPU: 5.997310179198227,
-            WORKSTATION_CPU_POWER: 37.69188804729355,
-            WORKSTATION_CPU_TEMP: 26.331239608350266,
-            WORKSTATION_GPU: 0.005542213190467393,
-            WORKSTATION_GPU_POWER: 34.98873083317938,
-            WORKSTATION_GPU_TEMP: 7.2343801958248655,
-            WORKSTATION_RAM: 35.07422870866432,
-            WORKSTATION_RAM_POWER: 6.783803805653058,
-            cost: 21.439034638093478,
-          },
-        ];
-        console.log(pieData);
-        const colors = ["#4CAF50", "#2196F3", "#FFC107"];
-        createPieChart("chart-consumption", pieData, colors);
-      })
-      .catch((error) =>
-        console.error("Erreur lors du chargement des données :", error)
-      );
-  } else {
-    // Remove the chart
-    d3.select("#chart-consumption").select("svg").remove();
-  }
-}
-
-// Attach event listener to checkbox
-document
-  .getElementById("consumption-checkbox")
-  .addEventListener("change", updateVisualization);
