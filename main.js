@@ -343,4 +343,133 @@ document.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
         });
     </script>
 </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrice de Corrélation</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fdf5ce;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            height: 100vh;
+        }
+        .matrix-title {
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        svg {
+            font-size: 10px;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: white;
+            padding: 5px;
+            border: 1px solid black;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-title">Pourcentage de consommation</div>
+    <div id="matrix-container"></div>
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Dimensions de la matrice
+        const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+        const width = 300;
+        const height = 300;
+
+        // Données statiques (exemple simplifié)
+        const metrics = ["Current (A)", "Energy (kWh)", "Power Factor"];
+        const matrixData = [
+            [1, 0.8, 0.6],
+            [0.8, 1, 0.4],
+            [0.6, 0.4, 1]
+        ];
+
+        // Échelle de couleurs
+        const colorScale = d3.scaleSequential(d3.interpolateRdBu)
+            .domain([-1, 1]); // Corrélation de -1 à 1
+
+        // Créer le conteneur SVG
+        const svg = d3.select("#matrix-container")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+        // Taille des cellules
+        const cellSize = width / metrics.length;
+
+        // Ajouter les cellules à la matrice
+        svg.selectAll("g.cell")
+            .data(matrixData.flat().map((value, index) => ({
+                value,
+                x: index % metrics.length,
+                y: Math.floor(index / metrics.length)
+            })))
+            .enter()
+            .append("rect")
+            .attr("x", d => d.x * cellSize)
+            .attr("y", d => d.y * cellSize)
+            .attr("width", cellSize)
+            .attr("height", cellSize)
+            .attr("fill", d => colorScale(d.value))
+            .attr("stroke", "#000")
+            .on("mouseover", function (event, d) {
+                d3.select("#tooltip")
+                    .style("visibility", "visible")
+                    .html(`Corrélation: ${d.value.toFixed(2)}`)
+                    .style("top", `${event.pageY + 5}px`)
+                    .style("left", `${event.pageX + 5}px`);
+            })
+            .on("mousemove", function (event) {
+                d3.select("#tooltip")
+                    .style("top", `${event.pageY + 5}px`)
+                    .style("left", `${event.pageX + 5}px`);
+            })
+            .on("mouseout", function () {
+                d3.select("#tooltip").style("visibility", "hidden");
+            });
+
+        // Ajouter les étiquettes des axes
+        svg.selectAll(".label-x")
+            .data(metrics)
+            .enter()
+            .append("text")
+            .attr("x", (d, i) => i * cellSize + cellSize / 2)
+            .attr("y", -10)
+            .style("text-anchor", "middle")
+            .style("font-size", "10px")
+            .text(d => d);
+
+        svg.selectAll(".label-y")
+            .data(metrics)
+            .enter()
+            .append("text")
+            .attr("x", -10)
+            .attr("y", (d, i) => i * cellSize + cellSize / 2)
+            .attr("dy", "0.35em")
+            .style("text-anchor", "end")
+            .style("font-size", "10px")
+            .text(d => d);
+
+        // Incliner les étiquettes X
+        svg.selectAll(".label-x")
+            .attr("transform", (d, i) => `rotate(-45, ${i * cellSize + cellSize / 2}, -10)`);
+    </script>
+</body>
 </html>
+
