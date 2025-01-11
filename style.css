@@ -114,10 +114,10 @@ body {
 
 #time-grid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 5px;
-  height: 100%; /* Ensure the grid fits inside the container */
+  max-height: 500px;
+  padding: 10px;
 }
 
 .time-button {
@@ -144,6 +144,16 @@ body {
 
 .time-button.selected.in-range {
   background-color: #388e3c; /* Darker green for selected weeks within range */
+}
+
+.month-container {
+  margin-bottom: 10px;
+}
+
+.month-container h3 {
+  margin: 5px 0;
+  font-size: 14px;
+  color: var(--primary-color);
 }
 
 /************ TIMELINE ************/

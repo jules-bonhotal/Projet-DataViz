@@ -487,8 +487,36 @@ const createTimeGrid = () => {
   const weeksGrid = d3.select("#time-grid");
   weeksGrid.selectAll("*").remove();
 
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ];
+
+  const monthContainers = {};
+
+  months.forEach((month, index) => {
+    const monthDiv = weeksGrid.append("div").attr("class", "month-container");
+    monthDiv.append("h3").text(month);
+    monthContainers[index] = monthDiv;
+  });
+
   for (let i = 0; i < weeksInYear; i++) {
-    const weekButton = weeksGrid
+    const weekStartDate = timeUtils.getStartOfWeek(i);
+    const weekEndDate = new Date(weekStartDate);
+    weekEndDate.setDate(weekEndDate.getDate() + 6);
+
+    const monthIndex = weekStartDate.getMonth();
+    const weekButton = monthContainers[monthIndex]
       .append("button")
       .attr("class", "time-button")
       .attr("data-week", i)
@@ -509,10 +537,6 @@ const createTimeGrid = () => {
         renderSystem.updateWeekSelection(state.startWeekIndex, i);
       }
     });
-
-    const weekStartDate = timeUtils.getStartOfWeek(i);
-    const weekEndDate = new Date(weekStartDate);
-    weekEndDate.setDate(weekEndDate.getDate() + 6);
 
     if (timeUtils.isWeekInRange(weekStartDate, weekEndDate)) {
       weekButton.classed("in-range", true);
