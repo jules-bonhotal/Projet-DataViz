@@ -676,3 +676,107 @@ const initialize = () => {
 };
 
 initialize();
+function createPieChart(containerId, data, colors) {
+  const width = 300;
+  const height = 300;
+  const margin = 20;
+  const radius = Math.min(width, height) / 2 - margin;
+
+  // Remove existing chart
+  d3.select(`#${containerId}`).select("svg").remove();
+
+  // Create SVG container
+  const svg = d3
+    .select(`#${containerId}`)
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+  // Set up colors
+  const color = d3.scaleOrdinal().range(colors);
+
+  // Convert data to pie chart format
+  const pie = d3.pie().value((d) => d[1]); // d[1] corresponds to the value
+  const data_ready = pie(Object.entries(data)); // Use Object.entries instead of d3.entries
+
+  // Define arc
+  const arc = d3
+    .arc()
+    .innerRadius(radius * 0.5)
+    .outerRadius(radius);
+
+  // Add arcs
+  svg
+    .selectAll("path")
+    .data(data_ready)
+    .enter()
+    .append("path")
+    .attr("d", arc)
+    .attr("fill", (d) => color(d.data[0])) // d.data[0] corresponds to the key
+    .attr("stroke", "white")
+    .style("stroke-width", "2px");
+
+  // Add labels
+  svg
+    .selectAll("text")
+    .data(data_ready)
+    .enter()
+    .append("text")
+    .text((d) => `${d.data[0]}: ${d.data[1]}%`) // d.data[0] is key, d.data[1] is value
+    .attr("transform", (d) => `translate(${arc.centroid(d)})`)
+    .style("text-anchor", "middle")
+    .style("font-size", "12px");
+}
+
+// Function to update visualization
+function updateVisualization() {
+  console.log("Updateing PieChart");
+  const chartContainer = d3.select("#chart-section");
+
+  if (document.getElementById("consumption-checkbox").checked) {
+    if (!document.getElementById("chart-consumption")) {
+      chartContainer.append("div").attr("id", "chart-consumption");
+    }
+
+    // Fetch data from JSON and create pie chart
+    fetchData(path)
+      .then((data) => {
+        const pieData = [
+          {
+            fecha_servidor: "2021-11-27T19:00:00",
+            voltaje: 118.96550895991132,
+            corriente: 1.0538038056530574,
+            frecuencia: 59.95874745981896,
+            energia: 223.3232774801404,
+            fp: 0.8996046554590801,
+            ESP32_temp: 51.620863088860155,
+            WORKSTATION_CPU: 5.997310179198227,
+            WORKSTATION_CPU_POWER: 37.69188804729355,
+            WORKSTATION_CPU_TEMP: 26.331239608350266,
+            WORKSTATION_GPU: 0.005542213190467393,
+            WORKSTATION_GPU_POWER: 34.98873083317938,
+            WORKSTATION_GPU_TEMP: 7.2343801958248655,
+            WORKSTATION_RAM: 35.07422870866432,
+            WORKSTATION_RAM_POWER: 6.783803805653058,
+            cost: 21.439034638093478,
+          },
+        ];
+        console.log(pieData);
+        const colors = ["#4CAF50", "#2196F3", "#FFC107"];
+        createPieChart("chart-consumption", pieData, colors);
+      })
+      .catch((error) =>
+        console.error("Erreur lors du chargement des données :", error)
+      );
+  } else {
+    // Remove the chart
+    d3.select("#chart-consumption").select("svg").remove();
+  }
+}
+
+// Attach event listener to checkbox
+document
+  .getElementById("consumption-checkbox")
+  .addEventListener("change", updateVisualization);
