@@ -1,91 +1,206 @@
 :root {
-    --primary-color: #ff7f0e;
-    --secondary-color: #1f77b4;
-    --background-light: #ffe3b1;
-    --wrapper-default-bg: #fdf1d1; /* Subtle background color for unselected wrappers */
-  
-    /* Define specific colors for each metric */
-    --voltage-color: #ff5733;
-    --current-color: #33ff57;
-    --power-color: #3375ff;
-    --frequency-color: #ff33a6;
-    --energy-color: #ffdd33;
-    --temperature-color: #33fff2;
-    --power-factor-color: #a633ff;
-    --consumption-color: #ff3333;
-  }
-  
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
-    background-color: var(--background-light);
-  }
-  
-  #checkbox-section {
-    width: 30%;
-    padding: 10px;
-    background: var(--background-light);
-    border: 1px solid var(--secondary-color);
-    border-radius: 5px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-  }
-  
-  #checkbox-section h3 {
-    color: var(--primary-color);
-    margin-bottom: 10px;
-  }
-  
-  #checkbox-section ul {
-    list-style: none;
-    padding: 0;
-  }
-  
-  #checkbox-section li {
-    margin-bottom: 8px;
-  }
-  
-  .checkbox-wrapper {
-    display: flex;
-    align-items: center;
-    padding: 5px;
-    border-radius: 5px;
-    background-color: var(--wrapper-default-bg); /* Apply subtle background */
-    transition: background-color 0.2s, box-shadow 0.2s;
-  }
-  
-  .checkbox-wrapper.checked {
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-  }
-  
-  #voltage-checkbox:checked ~ .checkbox-wrapper {
-    background-color: var(--voltage-color);
-  }
-  
-  #current-checkbox:checked ~ .checkbox-wrapper {
-    background-color: var(--current-color);
-  }
-  
-  #power-checkbox:checked ~ .checkbox-wrapper {
-    background-color: var(--power-color);
-  }
-  
-  #frequency-checkbox:checked ~ .checkbox-wrapper {
-    background-color: var(--frequency-color);
-  }
-  
-  #energy-checkbox:checked ~ .checkbox-wrapper {
-    background-color: var(--energy-color);
-  }
-  
-  #temperature-checkbox:checked ~ .checkbox-wrapper {
-    background-color: var(--temperature-color);
-  }
-  
-  #power-factor-checkbox:checked ~ .checkbox-wrapper {
-    background-color: var(--power-factor-color);
-  }
-  
-  #consumption-checkbox:checked ~ .checkbox-wrapper {
-    background-color: var(--consumption-color);
-  }
+  --primary-color: #ff7f0e;
+  --secondary-color: #1f77b4;
+  --background-light: #ffe3b1;
+  --wrapper-default-bg: #fdf1d1; /* Subtle background color for unselected wrappers */
+
+  /* Define specific colors for each metric */
+  --voltage-color: #ff5733;
+  --current-color: #33ff57;
+  --power-color: #3375ff;
+  --frequency-color: #ff33a6;
+  --energy-color: #ffdd33;
+  --temperature-color: #33fff2;
+  --power-factor-color: #a633ff;
+  --consumption-color: #ff3333;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-color: var(--background-light);
+}
+
+#checkbox-section {
+  width: 30%;
+  padding: 10px;
+  background: var(--background-light);
+  border: 1px solid var(--secondary-color);
+  border-radius: 5px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#checkbox-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+#checkbox-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+#checkbox-section li {
+  margin-bottom: 8px;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: var(--wrapper-default-bg);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.checkbox-wrapper.checked {
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+#voltage-checkbox:checked ~ .checkbox-wrapper {
+  background-color: var(--voltage-color);
+}
+
+#current-checkbox:checked ~ .checkbox-wrapper {
+  background-color: var(--current-color);
+}
+
+#power-checkbox:checked ~ .checkbox-wrapper {
+  background-color: var(--power-color);
+}
+
+#frequency-checkbox:checked ~ .checkbox-wrapper {
+  background-color: var(--frequency-color);
+}
+
+#energy-checkbox:checked ~ .checkbox-wrapper {
+  background-color: var(--energy-color);
+}
+
+#temperature-checkbox:checked ~ .checkbox-wrapper {
+  background-color: var(--temperature-color);
+}
+
+#power-factor-checkbox:checked ~ .checkbox-wrapper {
+  background-color: var(--power-factor-color);
+}
+
+#consumption-checkbox:checked ~ .checkbox-wrapper {
+  background-color: var(--consumption-color);
+}
+
+/***********************TIME SELECITON*************************/
+
+/******** WEEK SELECTION ****************/
+#time-selection-section {
+  width: 30%;
+  padding: 10px;
+  background: var(--background-light);
+  border: 1px solid var(--secondary-color);
+  border-radius: 5px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+  vertical-align: top;
+  height: auto;
+  width: auto;
+  overflow: auto; /* Make the div scrollable if content exceeds the height */
+}
+
+#time-selection-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+#time-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 5px;
+  height: 100%; /* Ensure the grid fits inside the container */
+}
+
+.time-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.time-button:hover {
+  background-color: var(--secondary-color);
+}
+
+.time-button.selected {
+  background-color: var(--secondary-color);
+}
+
+.time-button.in-range {
+  background-color: #4caf50; /* Green for weeks within the selected range */
+}
+
+.time-button.selected.in-range {
+  background-color: #388e3c; /* Darker green for selected weeks within range */
+}
+
+/************ TIMELINE ************/
+#timeline {
+  position: relative;
+  width: 100%;
+  height: 80px;
+  background-color: #f0f0f0;
+}
+
+.timeline-selection {
+  pointer-events: none;
+}
+
+.date-label {
+  font-family: Arial, sans-serif;
+  fill: #333;
+}
+
+.gradation-line {
+  pointer-events: none;
+}
+
+/************ CLOCK SELECTION **************/
+
+#clock-selection-section {
+  width: 30%;
+  padding: 10px;
+  background: var(--background-light);
+  border: 1px solid var(--secondary-color);
+  border-radius: 5px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.clock-container {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 10px;
+}
+
+.clock-wrapper {
+  text-align: center;
+}
+
+.clock-wrapper h4 {
+  margin: 0 0 10px 0;
+  color: var(--primary-color);
+}
+
+#start-clock,
+#end-clock {
+  background: #fff;
+  border-radius: 50%;
+}
+
+.hour-hand {
+  transform-origin: 50% 50%;
+  transition: all 0.1s;
+}
