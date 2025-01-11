@@ -151,7 +151,7 @@ body {
   position: relative;
   width: 100%;
   height: 80px;
-  background-color: #f0f0f0;
+  background-color: var(--wrapper-default-bg);
 }
 
 .timeline-selection {
@@ -196,11 +196,12 @@ body {
 
 #start-clock,
 #end-clock {
-  background: #fff;
+  background: var(--wrapper-default-bg);
   border-radius: 50%;
 }
 
 .hour-hand {
   transform-origin: 50% 50%;
   transition: all 0.1s;
+  color: #80757a;
 }
