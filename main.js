@@ -260,8 +260,8 @@ const createTimeline = () => {
     .enter()
     .append("text")
     .attr("class", "date-label")
-    .attr("x", (d) => timeScale(d))
-    .attr("y", 35)
+    .attr("x", (d) => timeScale(d) - 25)
+    .attr("y", 30)
     .attr("text-anchor", "middle")
     .attr("transform", (d, i) => {
       const x = timeScale(d);
