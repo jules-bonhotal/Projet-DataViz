@@ -125,6 +125,19 @@ function createPieChart(containerId, data, colors) {
     .attr("transform", (d) => `translate(${arc.centroid(d)})`)
     .style("text-anchor", "middle")
     .style("font-size", "12px");
+
+  // Handle no data case
+  if (data.unknown === 100) {
+    svg.selectAll("text").remove();
+    svg
+      .append("text")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("text-anchor", "middle")
+      .style("font-size", "14px")
+      .text("No data available in this range");
+    return; // Exit function early as no need to create a pie chart
+  }
 }
 
 const createLineChart = (containerId, data, valueKey, color) => {
@@ -201,11 +214,12 @@ const createLineChart = (containerId, data, valueKey, color) => {
       if (!parsedDate) console.warn("Invalid date:", d.fecha_servidor);
       return {
         date: parsedDate,
-        value: (isNaN(value) || value === 0 || value === null) ? null : value,
+        value: isNaN(value) || value === 0 || value === null ? null : value,
       };
     })
     .filter((d) => {
-      const inRange = d.date >= state.startTimestamp && d.date <= state.endTimestamp;
+      const inRange =
+        d.date >= state.startTimestamp && d.date <= state.endTimestamp;
       return d.date && inRange && !isNaN(d.value);
     });
 
@@ -222,7 +236,8 @@ const createLineChart = (containerId, data, valueKey, color) => {
   }
 
   // X axis
-  const x = d3.scaleTime()
+  const x = d3
+    .scaleTime()
     .domain(d3.extent(parsedData, (d) => d.date))
     .range([0, chartConfig.width]);
 
@@ -232,7 +247,8 @@ const createLineChart = (containerId, data, valueKey, color) => {
     .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%d/%m")));
 
   // Y axis
-  const y = d3.scaleLinear()
+  const y = d3
+    .scaleLinear()
     .domain([0, d3.max(parsedData, (d) => d.value)])
     .nice()
     .range([chartConfig.height, 0]);
@@ -241,19 +257,22 @@ const createLineChart = (containerId, data, valueKey, color) => {
 
   // Draw line
   svg
-  .append("path")
-  .datum(parsedData)
-  .attr("fill", "none")
-  .attr("stroke", color)
-  .attr("stroke-width", 1.5)
-  .attr(
-    "d",
-    d3.line()
-      .defined((d) => d.value !== null && d.value !== undefined && !isNaN(d.value))
-      .x((d) => x(d.date))
-      .y((d) => y(d.value))
-      .curve(d3.curveLinear) 
-  );
+    .append("path")
+    .datum(parsedData)
+    .attr("fill", "none")
+    .attr("stroke", color)
+    .attr("stroke-width", 1.5)
+    .attr(
+      "d",
+      d3
+        .line()
+        .defined(
+          (d) => d.value !== null && d.value !== undefined && !isNaN(d.value)
+        )
+        .x((d) => x(d.date))
+        .y((d) => y(d.value))
+        .curve(d3.curveLinear)
+    );
 
   // --- Tooltip Section ---
   const tooltip = d3
@@ -281,10 +300,7 @@ const createLineChart = (containerId, data, valueKey, color) => {
     .attr("fill", color)
     .attr("opacity", 0)
     .on("mouseover", function (event, d) {
-      tooltip
-        .transition()
-        .duration(200)
-        .style("opacity", 1);
+      tooltip.transition().duration(200).style("opacity", 1);
       tooltip
         .html(
           `<strong>Date:</strong> ${d3.timeFormat("%Y-%m-%d")(d.date)}<br>
@@ -306,10 +322,7 @@ const createLineChart = (containerId, data, valueKey, color) => {
         .style("top", event.pageY - 28 + "px");
     })
     .on("mouseout", function () {
-      tooltip
-        .transition()
-        .duration(300)
-        .style("opacity", 0);
+      tooltip.transition().duration(300).style("opacity", 0);
       d3.select(this)
         .transition()
         .duration(100)
@@ -317,9 +330,6 @@ const createLineChart = (containerId, data, valueKey, color) => {
         .attr("r", 4);
     });
 };
-
-
-
 
 // Time utilities
 const timeUtils = {
@@ -811,7 +821,29 @@ const renderSystem = {
           }
           /************** AJOUT **************/
           if (chartId === "chart-consumption") {
-            const chartData = getChartData(data);
+            const dateParser = d3.timeParse("%Y-%m-%dT%H:%M:%S");
+
+            const parsedData = data
+              .map((d) => {
+                const parsedDate = dateParser(d.fecha_servidor);
+                if (!parsedDate) {
+                  console.warn("Invalid date:", d.fecha_servidor);
+                  d["date"] = null; // Ensure `d["date"]` is always set, even if invalid
+                } else {
+                  d["date"] = parsedDate;
+                }
+                return d;
+              })
+              .filter((d) => {
+                const inRange =
+                  d["date"] &&
+                  d["date"] >= state.startTimestamp &&
+                  d["date"] <= state.endTimestamp;
+                return inRange;
+              });
+            console.log(parsedData);
+            const chartData = getChartData(parsedData);
+            console.log(chartData);
             // Appeler directement la fonction `createPieChart`
             const colors = ["#4CAF50", "#2196F3", "#FFC107", "#808080"];
             createPieChart("chart-consumption", chartData, colors);
