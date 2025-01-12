@@ -201,11 +201,12 @@ const createLineChart = (containerId, data, valueKey, color) => {
       if (!parsedDate) console.warn("Invalid date:", d.fecha_servidor);
       return {
         date: parsedDate,
-        value: (isNaN(value) || value === 0 || value === null) ? null : value,
+        value: isNaN(value) || value === 0 || value === null ? null : value,
       };
     })
     .filter((d) => {
-      const inRange = d.date >= state.startTimestamp && d.date <= state.endTimestamp;
+      const inRange =
+        d.date >= state.startTimestamp && d.date <= state.endTimestamp;
       return d.date && inRange && !isNaN(d.value);
     });
 
@@ -222,7 +223,8 @@ const createLineChart = (containerId, data, valueKey, color) => {
   }
 
   // X axis
-  const x = d3.scaleTime()
+  const x = d3
+    .scaleTime()
     .domain(d3.extent(parsedData, (d) => d.date))
     .range([0, chartConfig.width]);
 
@@ -232,7 +234,8 @@ const createLineChart = (containerId, data, valueKey, color) => {
     .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%d/%m")));
 
   // Y axis
-  const y = d3.scaleLinear()
+  const y = d3
+    .scaleLinear()
     .domain([0, d3.max(parsedData, (d) => d.value)])
     .nice()
     .range([chartConfig.height, 0]);
@@ -241,19 +244,22 @@ const createLineChart = (containerId, data, valueKey, color) => {
 
   // Draw line
   svg
-  .append("path")
-  .datum(parsedData)
-  .attr("fill", "none")
-  .attr("stroke", color)
-  .attr("stroke-width", 1.5)
-  .attr(
-    "d",
-    d3.line()
-      .defined((d) => d.value !== null && d.value !== undefined && !isNaN(d.value))
-      .x((d) => x(d.date))
-      .y((d) => y(d.value))
-      .curve(d3.curveLinear) 
-  );
+    .append("path")
+    .datum(parsedData)
+    .attr("fill", "none")
+    .attr("stroke", color)
+    .attr("stroke-width", 1.5)
+    .attr(
+      "d",
+      d3
+        .line()
+        .defined(
+          (d) => d.value !== null && d.value !== undefined && !isNaN(d.value)
+        )
+        .x((d) => x(d.date))
+        .y((d) => y(d.value))
+        .curve(d3.curveLinear)
+    );
 
   // --- Tooltip Section ---
   const tooltip = d3
@@ -281,10 +287,7 @@ const createLineChart = (containerId, data, valueKey, color) => {
     .attr("fill", color)
     .attr("opacity", 0)
     .on("mouseover", function (event, d) {
-      tooltip
-        .transition()
-        .duration(200)
-        .style("opacity", 1);
+      tooltip.transition().duration(200).style("opacity", 1);
       tooltip
         .html(
           `<strong>Date:</strong> ${d3.timeFormat("%Y-%m-%d")(d.date)}<br>
@@ -306,10 +309,7 @@ const createLineChart = (containerId, data, valueKey, color) => {
         .style("top", event.pageY - 28 + "px");
     })
     .on("mouseout", function () {
-      tooltip
-        .transition()
-        .duration(300)
-        .style("opacity", 0);
+      tooltip.transition().duration(300).style("opacity", 0);
       d3.select(this)
         .transition()
         .duration(100)
@@ -317,9 +317,6 @@ const createLineChart = (containerId, data, valueKey, color) => {
         .attr("r", 4);
     });
 };
-
-
-
 
 // Time utilities
 const timeUtils = {
@@ -898,3 +895,123 @@ const initialize = () => {
 };
 
 initialize();
+
+function createStackedAreaChart(containerId, data) {
+  const margin = { top: 40, right: 30, bottom: 30, left: 60 },
+    width = 600 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+  // Parser les dates et préparer les données
+  const dateParser = d3.timeParse("%Y-%m-%dT%H:%M:%S");
+  const preparedData = data
+    .map((d) => ({
+      date: dateParser(d.fecha_servidor),
+      CPU: d.WORKSTATION_CPU_POWER || 0,
+      GPU: d.WORKSTATION_GPU_POWER || 0,
+      RAM: d.WORKSTATION_RAM_POWER || 0,
+    }))
+    .filter((d) => d.date);
+
+  if (!preparedData.length) {
+    console.warn("Aucune donnée valide pour afficher le graphique.");
+    d3.select(`#${containerId}`)
+      .append("p")
+      .text("Aucune donnée valide.")
+      .style("color", "red");
+    return;
+  }
+
+  // Création des échelles
+  const x = d3
+    .scaleTime()
+    .domain(d3.extent(preparedData, (d) => d.date))
+    .range([0, width]);
+
+  const y = d3
+    .scaleLinear()
+    .domain([0, d3.max(preparedData, (d) => d.CPU + d.GPU + d.RAM)])
+    .nice()
+    .range([height, 0]);
+
+  const color = d3
+    .scaleOrdinal()
+    .domain(["CPU", "GPU", "RAM"])
+    .range(["#ff5733", "#33ff57", "#3357ff"]);
+
+  // Générer les données empilées
+  const stack = d3.stack().keys(["CPU", "GPU", "RAM"]);
+  const stackedData = stack(preparedData);
+
+  // Supprimer l'ancien graphique
+  d3.select(`#${containerId}`).select("svg").remove();
+
+  // Création du conteneur SVG
+  const svg = d3
+    .select(`#${containerId}`)
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Créer une aire empilée
+  const area = d3
+    .area()
+    .x((d) => x(d.data.date))
+    .y0((d) => y(d[0]))
+    .y1((d) => y(d[1]))
+    .curve(d3.curveBasis);
+
+  // Ajouter les couches
+  svg
+    .selectAll("path")
+    .data(stackedData)
+    .enter()
+    .append("path")
+    .attr("d", area)
+    .attr("fill", (d) => color(d.key))
+    .attr("opacity", 0.8);
+
+  // Ajouter les axes
+  svg
+    .append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%d/%m")));
+
+  svg.append("g").call(d3.axisLeft(y));
+
+  // Ajouter la légende
+  const legend = svg
+    .selectAll(".legend")
+    .data(color.domain())
+    .enter()
+    .append("g")
+    .attr("class", "legend")
+    .attr("transform", (d, i) => `translate(0,${i * 20})`);
+
+  legend
+    .append("rect")
+    .attr("x", width - 18)
+    .attr("y", -20)
+    .attr("width", 18)
+    .attr("height", 18)
+    .style("fill", color);
+
+  legend
+    .append("text")
+    .attr("x", width - 24)
+    .attr("y", -10)
+    .attr("dy", ".35em")
+    .style("text-anchor", "end")
+    .text((d) => d);
+}
+
+// Appel de la fonction avec vérification des données
+fetch("./data/hour.json")
+  .then((response) => response.json())
+  .then((data) => {
+    console.log("Données brutes :", data);
+    createStackedAreaChart("stacked-area-chart-container", data);
+  })
+  .catch((error) => console.error("Erreur lors du chargement des données :", error));
+
