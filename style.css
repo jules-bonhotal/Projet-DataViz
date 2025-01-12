@@ -250,3 +250,9 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
   transition: all 0.1s;
   color: #80757a;
 }
+
+#line-chart-section {
+  display:grid;
+  grid-template-columns: 1fr 2fr;
+  margin-top: 20px;
+}
