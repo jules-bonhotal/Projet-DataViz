@@ -3,8 +3,8 @@ const path = "./data/hour.json";
 // Core state
 const state = {
   selectedMetrics: [],
-  startTimestamp: new Date("2023-01-01"),
-  endTimestamp: new Date("2023-12-31"),
+  startTimestamp: new Date("2021-01-01"),
+  endTimestamp: new Date("2021-12-31"),
   isDraggingWeeks: false,
   startWeekIndex: null,
 };
@@ -127,13 +127,46 @@ function createPieChart(containerId, data, colors) {
     .style("font-size", "12px");
 }
 
-// Chart creation
 const createLineChart = (containerId, data, valueKey, color) => {
+  // Clear existing chart
   d3.select(`#${containerId}`).select("svg").remove();
+
+  let title = valueKey;
+
+  // switch case to translate the key to the correct title to display
+  switch (valueKey) {
+    case "voltaje":
+      title = "Voltage";
+      break;
+    case "corriente":
+      title = "Current";
+      break;
+    case "potencia":
+      title = "Power";
+      break;
+    case "frecuencia":
+      title = "Frequency";
+      break;
+    case "energia":
+      title = "Energy";
+      break;
+    case "ESP32_temp":
+      title = "Temperature";
+      break;
+    case "fp":
+      title = "Power Factor";
+      break;
+    case "consumo":
+      title = "Consumption";
+      break;
+    default:
+      valueKey = "Unknown";
+  }
 
   const svg = d3
     .select(`#${containerId}`)
     .append("svg")
+    .style("background-color", "white")
     .attr(
       "width",
       chartConfig.width + chartConfig.margin.left + chartConfig.margin.right
@@ -148,6 +181,7 @@ const createLineChart = (containerId, data, valueKey, color) => {
       `translate(${chartConfig.margin.left},${chartConfig.margin.top})`
     );
 
+  // Chart title
   svg
     .append("text")
     .attr("x", chartConfig.width / 2)
@@ -155,51 +189,142 @@ const createLineChart = (containerId, data, valueKey, color) => {
     .attr("text-anchor", "middle")
     .style("font-size", "16px")
     .style("text-decoration", "underline")
-    .text(valueKey);
+    .text(title);
+
+  // Correct date parsing
+  const dateParser = d3.timeParse("%Y-%m-%dT%H:%M:%S");
 
   const parsedData = data
-    .map((d) => ({
-      date: d3.timeParse("%Y-%m-%dT%H:%M:%S")(d.fecha_servidor),
-      value: +d[valueKey],
-    }))
-    .filter((_, i) => i % 10 === 0);
+    .map((d) => {
+      const parsedDate = dateParser(d.fecha_servidor);
+      const value = +d[valueKey];
+      if (!parsedDate) console.warn("Invalid date:", d.fecha_servidor);
+      return {
+        date: parsedDate,
+        value: (isNaN(value) || value === 0 || value === null) ? null : value,
+      };
+    })
+    .filter((d) => {
+      const inRange = d.date >= state.startTimestamp && d.date <= state.endTimestamp;
+      return d.date && inRange && !isNaN(d.value);
+    });
 
-  const x = d3
-    .scaleTime()
+  // Handle no data case
+  if (parsedData.length === 0) {
+    svg
+      .append("text")
+      .attr("x", chartConfig.width / 2)
+      .attr("y", chartConfig.height / 2)
+      .attr("text-anchor", "middle")
+      .style("font-size", "14px")
+      .text("No data available in this range");
+    return;
+  }
+
+  // X axis
+  const x = d3.scaleTime()
     .domain(d3.extent(parsedData, (d) => d.date))
     .range([0, chartConfig.width]);
-
-  const y = d3
-    .scaleLinear()
-    .domain([0, d3.max(parsedData, (d) => d.value)])
-    .range([chartConfig.height, 0]);
 
   svg
     .append("g")
     .attr("transform", `translate(0, ${chartConfig.height})`)
     .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%d/%m")));
 
+  // Y axis
+  const y = d3.scaleLinear()
+    .domain([0, d3.max(parsedData, (d) => d.value)])
+    .nice()
+    .range([chartConfig.height, 0]);
+
   svg.append("g").call(d3.axisLeft(y));
 
+  // Draw line
   svg
-    .append("path")
-    .datum(parsedData)
-    .attr("fill", "none")
-    .attr("stroke", color)
-    .attr("stroke-width", 1.5)
-    .attr(
-      "d",
-      d3
-        .line()
-        .x((d) => x(d.date))
-        .y((d) => y(d.value))
-    );
+  .append("path")
+  .datum(parsedData)
+  .attr("fill", "none")
+  .attr("stroke", color)
+  .attr("stroke-width", 1.5)
+  .attr(
+    "d",
+    d3.line()
+      .defined((d) => d.value !== null && d.value !== undefined && !isNaN(d.value))
+      .x((d) => x(d.date))
+      .y((d) => y(d.value))
+      .curve(d3.curveLinear) 
+  );
+
+  // --- Tooltip Section ---
+  const tooltip = d3
+    .select(`#${containerId}`)
+    .append("div")
+    .style("position", "absolute")
+    .style("background-color", "white")
+    .style("border", "1px solid #ccc")
+    .style("padding", "6px")
+    .style("border-radius", "4px")
+    .style("pointer-events", "none")
+    .style("font-size", "12px")
+    .style("box-shadow", "0px 0px 5px rgba(0,0,0,0.3)")
+    .style("opacity", 0);
+
+  // Add hover points
+  svg
+    .selectAll("dot")
+    .data(parsedData)
+    .enter()
+    .append("circle")
+    .attr("cx", (d) => x(d.date))
+    .attr("cy", (d) => y(d.value))
+    .attr("r", 4)
+    .attr("fill", color)
+    .attr("opacity", 0)
+    .on("mouseover", function (event, d) {
+      tooltip
+        .transition()
+        .duration(200)
+        .style("opacity", 1);
+      tooltip
+        .html(
+          `<strong>Date:</strong> ${d3.timeFormat("%Y-%m-%d")(d.date)}<br>
+           <strong>Time:</strong> ${d3.timeFormat("%H:%M:%S")(d.date)}<br>
+           <strong>${title}:</strong> ${d.value.toFixed(2)}`
+        )
+        .style("left", event.pageX + 10 + "px")
+        .style("top", event.pageY - 28 + "px");
+
+      d3.select(this)
+        .transition()
+        .duration(100)
+        .attr("opacity", 1)
+        .attr("r", 6);
+    })
+    .on("mousemove", function (event) {
+      tooltip
+        .style("left", event.pageX + 10 + "px")
+        .style("top", event.pageY - 28 + "px");
+    })
+    .on("mouseout", function () {
+      tooltip
+        .transition()
+        .duration(300)
+        .style("opacity", 0);
+      d3.select(this)
+        .transition()
+        .duration(100)
+        .attr("opacity", 0)
+        .attr("r", 4);
+    });
 };
+
+
+
 
 // Time utilities
 const timeUtils = {
   getStartOfWeek: (weekIndex) => {
-    const firstDate = new Date("2023-01-01");
+    const firstDate = new Date("2021-01-01");
     return new Date(firstDate.setDate(firstDate.getDate() + weekIndex * 7));
   },
 
