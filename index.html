@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
     <title>Data Center Metrics Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
   </head>
+  <body>
     <div id="checkbox-section">
       <h3>Select Metrics</h3>
       <ul>
@@ -47,29 +47,24 @@
           <input type="checkbox" id="temperature-checkbox" />
           <div class="checkbox-wrapper">
             <label for="temperature-checkbox"
-              >ESP32 Temperature - Centigrade Degrees (Â°C)</label
+              >ESP32 Temperature - Centigrade Degrees (°C)</label
             >
           </div>
         </li>
         <li>
           <input type="checkbox" id="power-factor-checkbox" />
           <div class="checkbox-wrapper">
-            <label for="power-factor-checkbox"
-              >Power Factor - Adimensional</label
-            >
+            <label for="power-factor-checkbox">Power Factor - Adimensional</label>
           </div>
         </li>
         <li>
           <input type="checkbox" id="consumption-checkbox" />
           <div class="checkbox-wrapper">
-            <label for="consumption-checkbox"
-              >Pourcentages de Consomation</label
-            >
+            <label for="consumption-checkbox">Pourcentages de Consomation</label>
           </div>
         </li>
       </ul>
     </div>
-
 
     <div id="time-selection-section">
       <h3>Select Time Span</h3>
@@ -96,9 +91,11 @@
       </div>
     </div>
 
-
-    <div id="line-chart-section">
-    </div>
+    <div id="visualization-container" style="display: flex; justify-content: space-between; gap: 20px; padding: 20px; background-color: #f8eac9;">
+      <!-- Stacked Area Chart -->
+      <div style="flex: 1; background-color: #f2d9b3; border-radius: 8px; padding: 10px;">
+        <svg id="stacked-area-chart" width="400" height="300"></svg>
+      </div>
 
     <script src="main.js"></script>
   </body>
