@@ -838,7 +838,6 @@ const renderSystem = {
                 return inRange;
               });
 
-            console.log(parsedData);
             const chartData = getChartData(parsedData);
             // Appeler directement la fonction `createPieChart`
             const colors = ["#4CAF50", "#2196F3", "#FFC107", "#808080"];
@@ -928,6 +927,7 @@ const initialize = () => {
 
 initialize();
 
+// Fonction pour créer le graphique (déjà définie dans votre code)
 function createStackedAreaChart(containerId, data) {
   d3.select(`#${containerId}`).select("svg").remove();
 
@@ -935,7 +935,7 @@ function createStackedAreaChart(containerId, data) {
     width = 600 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
-  // Parser les dates et préparer les données
+  // Préparation des données
   const dateParser = d3.timeParse("%Y-%m-%dT%H:%M:%S");
   const preparedData = data
     .map((d) => ({
@@ -951,8 +951,6 @@ function createStackedAreaChart(containerId, data) {
         d.date <= state.endTimestamp;
       return inRange;
     });
-
-  console.log("createStacked", preparedData);
 
   // Création des échelles
   const x = d3
@@ -971,7 +969,6 @@ function createStackedAreaChart(containerId, data) {
     .domain(["CPU", "GPU", "RAM"])
     .range(["#ff5733", "#33ff57", "#3357ff"]);
 
-  // Générer les données empilées
   const stack = d3.stack().keys(["CPU", "GPU", "RAM"]);
   const stackedData = stack(preparedData);
 
@@ -984,7 +981,7 @@ function createStackedAreaChart(containerId, data) {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Créer une aire empilée
+  // Ajouter une aire empilée
   const area = d3
     .area()
     .x((d) => x(d.data.date))
@@ -992,7 +989,6 @@ function createStackedAreaChart(containerId, data) {
     .y1((d) => y(d[1]))
     .curve(d3.curveBasis);
 
-  // Ajouter les couches
   svg
     .selectAll("path")
     .data(stackedData)
@@ -1010,7 +1006,7 @@ function createStackedAreaChart(containerId, data) {
 
   svg.append("g").call(d3.axisLeft(y));
 
-  // Ajouter la légende
+  // Ajouter une légende
   const legend = svg
     .selectAll(".legend")
     .data(color.domain())
