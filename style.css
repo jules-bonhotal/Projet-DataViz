@@ -6,13 +6,21 @@
 
   /* Define specific colors for each metric */
   --voltage-color: #ff5733;
+  --voltage-darker-color: #b32b10; /* Darker shade for checkbox */
   --current-color: #33ff57;
+  --current-darker-color: #0bb329;
   --power-color: #3375ff;
+  --power-darker-color: #0c42ad;
   --frequency-color: #ff33a6;
+  --frequency-darker-color: #bb066a;
   --energy-color: #ffdd33;
+  --energy-darker-color: #b99c09;
   --temperature-color: #33fff2;
+  --temperature-darker-color: #069b91;
   --power-factor-color: #a633ff;
+  --power-factor-darker-color: #560994;
   --consumption-color: #ff3333;
+  --consumption-darker-color: #920b0b;
 }
 
 body {
@@ -58,7 +66,7 @@ body {
 }
 
 #voltage-checkbox:checked ~ .checkbox-wrapper::before {
-  background-color: var(--voltage-color);
+  background-color: var(--voltage-darker-color);
 }
 
 #current-checkbox:checked ~ .checkbox-wrapper {
@@ -66,7 +74,7 @@ body {
 }
 
 #current-checkbox:checked ~ .checkbox-wrapper::before {
-  background-color: var(--current-color);
+  background-color: var(--current-darker-color);
 }
 
 #power-checkbox:checked ~ .checkbox-wrapper {
@@ -74,7 +82,7 @@ body {
 }
 
 #power-checkbox:checked ~ .checkbox-wrapper::before {
-  background-color: var(--power-color);
+  background-color: var(--power-darker-color);
 }
 
 #frequency-checkbox:checked ~ .checkbox-wrapper {
@@ -82,7 +90,7 @@ body {
 }
 
 #frequency-checkbox:checked ~ .checkbox-wrapper::before {
-  background-color: var(--frequency-color);
+  background-color: var(--frequency-darker-color);
 }
 
 #energy-checkbox:checked ~ .checkbox-wrapper {
@@ -90,7 +98,7 @@ body {
 }
 
 #energy-checkbox:checked ~ .checkbox-wrapper::before {
-  background-color: var(--energy-color);
+  background-color: var(--energy-darker-color);
 }
 
 #temperature-checkbox:checked ~ .checkbox-wrapper {
@@ -98,7 +106,7 @@ body {
 }
 
 #temperature-checkbox:checked ~ .checkbox-wrapper::before {
-  background-color: var(--temperature-color);
+  background-color: var(--temperature-darker-color);
 }
 
 #power-factor-checkbox:checked ~ .checkbox-wrapper {
@@ -106,7 +114,7 @@ body {
 }
 
 #power-factor-checkbox:checked ~ .checkbox-wrapper::before {
-  background-color: var(--power-factor-color);
+  background-color: var(--power-darker-factor-color);
 }
 
 #consumption-checkbox:checked ~ .checkbox-wrapper {
@@ -114,7 +122,7 @@ body {
 }
 
 #consumption-checkbox:checked ~ .checkbox-wrapper::before {
-  background-color: var(--consumption-color);
+  background-color: var(--consumption-darker-color);
 }
 input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
   opacity: 1;
@@ -153,6 +161,8 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
   gap: 5px;
   max-height: 500px;
   padding: 10px;
+  background-color: var(--wrapper-default-bg);
+  border-radius: 5px;
 }
 
 .time-button {
@@ -183,6 +193,8 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
 
 .month-container {
   margin-bottom: 10px;
+  background-color: var(--background-light);
+  border-radius: 5%;
 }
 
 .month-container h3 {
@@ -197,6 +209,7 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
   width: 100%;
   height: 80px;
   background-color: var(--wrapper-default-bg);
+  border-radius: 15%;
 }
 
 .timeline-selection {
@@ -252,7 +265,7 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
 }
 
 #line-chart-section {
-  display:grid;
+  display: grid;
   grid-template-columns: 1fr 2fr;
   margin-top: 20px;
 }
