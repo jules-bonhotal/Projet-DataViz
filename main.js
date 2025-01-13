@@ -927,11 +927,10 @@ const initialize = () => {
 
 initialize();
 
-// Fonction pour créer le graphique (déjà définie dans votre code)
 function createStackedAreaChart(containerId, data) {
   d3.select(`#${containerId}`).select("svg").remove();
 
-  const margin = { top: 40, right: 30, bottom: 30, left: 60 },
+  const margin = { top: 60, right: 30, bottom: 30, left: 60 }, // Augmentation de la marge supérieure
     width = 600 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
@@ -980,6 +979,16 @@ function createStackedAreaChart(containerId, data) {
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Ajouter le titre en haut
+  svg
+    .append("text")
+    .attr("x", (width + margin.left + margin.right) / 2 - margin.left)
+    .attr("y", -margin.top / 2)
+    .attr("text-anchor", "middle")
+    .style("font-size", "16px")
+    .style("font-weight", "bold")
+    .text("Consommation d'énergie par composant (CPU, GPU, RAM)");
 
   // Ajouter une aire empilée
   const area = d3
@@ -1041,10 +1050,11 @@ function createStackedAreaChart(containerId, data) {
       .attr("y", chartConfig.height / 2)
       .attr("text-anchor", "middle")
       .style("font-size", "14px")
-      .text("No data available in this range");
+      .text("Aucune donnée disponible dans cette plage");
     return;
   }
 }
+
 
 document.addEventListener("DOMContentLoaded", function () {
   const path = "./data/hour.json";
