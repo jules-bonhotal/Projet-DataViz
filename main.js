@@ -1108,7 +1108,6 @@ document.addEventListener("DOMContentLoaded", function () {
     return denominator === 0 ? 0 : numerator / denominator;
   }
 
-  // Créer la heatmap
   function createCorrelationHeatmap(containerId, matrixData) {
     const { matrix, keys } = matrixData;
     const cellSize = 70; // Taille des cellules
@@ -1161,20 +1160,38 @@ document.addEventListener("DOMContentLoaded", function () {
       .style("fill", "black")
       .text((d) => (d !== null ? d.toFixed(2) : "N/A"));
   
-    // Ajouter les labels des colonnes (axe X) en vertical et gras
+   // Ajouter les labels des colonnes (axe X) avec espacement uniforme
+svg
+.selectAll(".x-label")
+.data(keys)
+.enter()
+.append("text")
+.attr("x", (_, i) => i * cellSize + cellSize / 2) // Centrer sur la cellule
+.attr("y", -23) // Position au-dessus des cellules
+.style("text-anchor", "middle") // Centré horizontalement
+.style("font-size", "10px")
+.style("font-weight", "bold") // Texte en gras pour lisibilité
+.style("fill", "black")
+.text((d) => d.toUpperCase());
+
+
+  
+    // Ajouter les labels des lignes (axe Y) en vertical
     svg
-      .selectAll(".x-label")
+      .selectAll(".y-label")
       .data(keys)
       .enter()
       .append("text")
-      .attr("x", (_, i) => i * cellSize + cellSize / 2) // Centré horizontalement sur la cellule
-      .attr("y", -35) // Position légèrement au-dessus
-      .attr("transform", (_, i) => `rotate(-90, ${i * cellSize + cellSize / 2}, -10)`) // Rotation verticale
-      .attr("text-anchor", "middle")
+      .attr("x", -10) // Position à gauche des cellules
+      .attr("y", (_, i) => i * cellSize + cellSize / 2) // Centrer sur la cellule
+      .attr("dy", ".35em")
+      .style("text-anchor", "end") // Aligné à droite
       .style("font-size", "12px")
-      .style("font-weight", "bold") // Gras
+      .style("font-weight", "bold") // Gras pour lisibilité
+      .style("fill", "black")
       .text((d) => d.toUpperCase());
   }
+  
   
   // Écouter les changements sur les cases à cocher
   document
