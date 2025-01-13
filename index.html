@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="style.css" />
     <title>Data Center Metrics Visualization</title>
   </head>
+  <body>
     <div id="checkbox-section">
       <h3>Select Metrics</h3>
       <ul>
@@ -21,12 +22,6 @@
           <input type="checkbox" id="current-checkbox" />
           <div class="checkbox-wrapper">
             <label for="current-checkbox">Current (A)</label>
-          </div>
-        </li>
-        <li>
-          <input type="checkbox" id="power-checkbox" />
-          <div class="checkbox-wrapper">
-            <label for="power-checkbox">Power (PA) - Watts (W)</label>
           </div>
         </li>
         <li>
@@ -52,14 +47,6 @@
           </div>
         </li>
         <li>
-          <input type="checkbox" id="power-factor-checkbox" />
-          <div class="checkbox-wrapper">
-            <label for="power-factor-checkbox"
-              >Power Factor - Adimensional</label
-            >
-          </div>
-        </li>
-        <li>
           <input type="checkbox" id="consumption-checkbox" />
           <div class="checkbox-wrapper">
             <label for="consumption-checkbox"
@@ -69,7 +56,6 @@
         </li>
       </ul>
     </div>
-
 
     <div id="time-selection-section">
       <h3>Select Time Span</h3>
@@ -98,13 +84,11 @@
 
     <div id="stacked-area-chart"></div>
 
-    <div id="line-chart-section">
-    </div>
+    <div id="line-chart-section"></div>
     <div id="stacked-area-chart-container"></div>
-    <div id="line-chart-consumption-container">
-      <div id="line-chart-consumption"></div>
+    <div id="line-chart-consumption-container"></div>
+    <div id="line-chart-consumption"></div>
 
-    
     <script src="main.js"></script>
   </body>
 </html>

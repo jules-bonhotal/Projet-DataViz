@@ -24,11 +24,10 @@ const chartConfig = {
 const metrics = {
   voltage: { key: "voltaje", color: "#ff5733" },
   current: { key: "corriente", color: "#33ff57" },
-  power: { key: "potencia", color: "#3357ff" },
   frequency: { key: "frecuencia", color: "#ff33a6" },
   energy: { key: "energia", color: "#ffdd33" },
   temperature: { key: "ESP32_temp", color: "#33fff2" },
-  powerFactor: { key: "fp", color: "#a633ff" },
+  //powerFactor: { key: "fp", color: "#a633ff" },
   consumption: { key: "consumo", color: "#ff33ff" },
 };
 
@@ -153,9 +152,6 @@ const createLineChart = (containerId, data, valueKey, color) => {
       break;
     case "corriente":
       title = "Current";
-      break;
-    case "potencia":
-      title = "Power";
       break;
     case "frecuencia":
       title = "Frequency";
