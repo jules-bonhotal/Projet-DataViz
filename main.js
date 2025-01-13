@@ -1120,7 +1120,7 @@ function pearsonCorrelation(x, y) {
 function createCorrelationHeatmap(containerId, matrixData) {
   const { matrix, keys } = matrixData;
   const cellSize = 70; // Taille des cellules
-  const labelOffset = 100; // Espace pour les étiquettes
+  const labelOffset = 150; // Espace pour les étiquettes
   const width = cellSize * keys.length;
   const height = cellSize * keys.length;
 
@@ -1129,10 +1129,10 @@ function createCorrelationHeatmap(containerId, matrixData) {
   const svg = d3
     .select(`#${containerId}`)
     .append("svg")
-    .attr("width", width + labelOffset + 50) // Ajustement pour les labels
-    .attr("height", height + labelOffset + 50) // Ajustement pour les labels
+    .attr("width", width + labelOffset)
+    .attr("height", height + labelOffset)
     .append("g")
-    .attr("transform", `translate(${labelOffset}, ${labelOffset / 2})`);
+    .attr("transform", `translate(${labelOffset}, 50)`);
 
   const colorScale = d3
     .scaleLinear()
@@ -1168,33 +1168,20 @@ function createCorrelationHeatmap(containerId, matrixData) {
     .style("fill", "black")
     .text((d) => (d !== null ? d.toFixed(2) : "N/A"));
 
-  // Ajouter les labels des colonnes (axes X) en vertical
+  // Ajouter les labels des colonnes (axe X) en vertical
   svg
-    .selectAll(".x-label")
-    .data(keys)
-    .enter()
-    .append("text")
-    .attr("x", (_, i) => i * cellSize + cellSize / 2)
-    .attr("y", -labelOffset / 2) // Placer en haut
-    .attr("text-anchor", "middle")
-    .attr("dominant-baseline", "middle")
-    .attr("transform", (_, i) => `translate(${i * cellSize + cellSize / 2}, 0) rotate(-90)`) // Rotation à -90 degrés
-    .style("font-size", "14px")
-    .style("font-weight", "bold")
-    .text((d) => d.toUpperCase().replace(/_/g, " "));
+  .selectAll(".x-label")
+  .data(keys)
+  .enter()
+  .append("text")
+  .attr("x", (_, i) => i * cellSize + cellSize / 2) // Centrer sur la cellule
+  .attr("y", -39) // Ajuster la hauteur au-dessus de la cellule
+  .attr("transform", (_, i) => `rotate(-90, ${i * cellSize + cellSize / 2}, -10)`) // Rotation verticale
+  .attr("text-anchor", "middle") // Alignement centré
+  .style("font-size", "9px") // Réduction de la taille pour éviter tout encombrement
+  .style("font-weight", "bold") // Texte en gras pour meilleure lisibilité
+  .style("fill", "black")
+  .text((d) => d.toUpperCase());
 
-  // Ajouter les labels des lignes (axes Y)
-  svg
-    .selectAll(".y-label")
-    .data(keys)
-    .enter()
-    .append("text")
-    .attr("x", -10)
-    .attr("y", (_, i) => i * cellSize + cellSize / 2)
-    .attr("text-anchor", "end")
-    .attr("dominant-baseline", "middle")
-    .style("font-size", "14px")
-    .style("font-weight", "bold")
-    .text((d) => d.toUpperCase().replace(/_/g, " "));
+
 }
-
