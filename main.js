@@ -841,12 +841,13 @@ const renderSystem = {
                   d["date"] <= state.endTimestamp;
                 return inRange;
               });
+
             console.log(parsedData);
             const chartData = getChartData(parsedData);
-            console.log(chartData);
             // Appeler directement la fonction `createPieChart`
             const colors = ["#4CAF50", "#2196F3", "#FFC107", "#808080"];
             createPieChart("chart-consumption", chartData, colors);
+            createStackedAreaChart("stacked-area-chart-container", data);
           } else {
             createLineChart(chartId, data, config.key, config.color);
           }
@@ -932,6 +933,8 @@ const initialize = () => {
 initialize();
 
 function createStackedAreaChart(containerId, data) {
+  d3.select(`#${containerId}`).select("svg").remove();
+
   const margin = { top: 40, right: 30, bottom: 30, left: 60 },
     width = 600 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
@@ -945,16 +948,15 @@ function createStackedAreaChart(containerId, data) {
       GPU: d.WORKSTATION_GPU_POWER || 0,
       RAM: d.WORKSTATION_RAM_POWER || 0,
     }))
-    .filter((d) => d.date);
+    .filter((d) => {
+      const inRange =
+        d.date &&
+        d.date >= state.startTimestamp &&
+        d.date <= state.endTimestamp;
+      return inRange;
+    });
 
-  if (!preparedData.length) {
-    console.warn("Aucune donnée valide pour afficher le graphique.");
-    d3.select(`#${containerId}`)
-      .append("p")
-      .text("Aucune donnée valide.")
-      .style("color", "red");
-    return;
-  }
+  console.log("createStacked", preparedData);
 
   // Création des échelles
   const x = d3
@@ -976,9 +978,6 @@ function createStackedAreaChart(containerId, data) {
   // Générer les données empilées
   const stack = d3.stack().keys(["CPU", "GPU", "RAM"]);
   const stackedData = stack(preparedData);
-
-  // Supprimer l'ancien graphique
-  d3.select(`#${containerId}`).select("svg").remove();
 
   // Création du conteneur SVG
   const svg = d3
@@ -1039,112 +1038,18 @@ function createStackedAreaChart(containerId, data) {
     .attr("dy", ".35em")
     .style("text-anchor", "end")
     .text((d) => d);
-}
 
-// Appel de la fonction avec vérification des données
-fetch("./data/hour.json")
-  .then((response) => response.json())
-  .then((data) => {
-    console.log("Données brutes :", data);
-    createStackedAreaChart("stacked-area-chart-container", data);
-  })
-  .catch((error) =>
-    console.error("Erreur lors du chargement des données :", error)
-  );
-  
-  function createLineChartConsumption(containerId, data) {
-    const margin = { top: 40, right: 30, bottom: 50, left: 50 },
-      width = 600 - margin.left - margin.right,
-      height = 400 - margin.top - margin.bottom;
-  
-    const svg = d3
-      .select(`#${containerId}`)
-      .append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
-  
-    const dateParser = d3.timeParse("%Y-%m-%dT%H:%M:%S");
-    const preparedData = data.map((d) => ({
-      date: dateParser(d.fecha_servidor),
-      CPU: d.WORKSTATION_CPU_POWER || 0,
-      GPU: d.WORKSTATION_GPU_POWER || 0,
-      RAM: d.WORKSTATION_RAM_POWER || 0,
-    }));
-  
-    const x = d3
-      .scaleTime()
-      .domain(d3.extent(preparedData, (d) => d.date))
-      .range([0, width]);
-  
-    const y = d3
-      .scaleLinear()
-      .domain([
-        0,
-        d3.max(preparedData, (d) =>
-          Math.max(d.CPU, d.GPU, d.RAM)
-        ),
-      ])
-      .range([height, 0]);
-  
+  if (
+    preparedData.length === 0 ||
+    preparedData.every((d) => d.CPU === 0 && d.GPU === 0 && d.RAM === 0)
+  ) {
     svg
-      .append("g")
-      .attr("transform", `translate(0, ${height})`)
-      .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%d/%m")));
-  
-    svg.append("g").call(d3.axisLeft(y));
-  
-    const colors = {
-      CPU: "#ff5733",
-      GPU: "#33ff57",
-      RAM: "#3357ff",
-    };
-  
-    ["CPU", "GPU", "RAM"].forEach((key) => {
-      svg
-        .append("path")
-        .datum(preparedData)
-        .attr("fill", "none")
-        .attr("stroke", colors[key])
-        .attr("stroke-width", 1.5)
-        .attr(
-          "d",
-          d3
-            .line()
-            .x((d) => x(d.date))
-            .y((d) => y(d[key]))
-        );
-    });
-  
-    const legend = svg
-      .selectAll(".legend")
-      .data(["CPU", "GPU", "RAM"])
-      .enter()
-      .append("g")
-      .attr("class", "legend")
-      .attr("transform", (d, i) => `translate(0,${i * 20})`);
-  
-    legend
-      .append("rect")
-      .attr("x", width - 20)
-      .attr("y", -margin.top / 2)
-      .attr("width", 18)
-      .attr("height", 18)
-      .style("fill", (d) => colors[d]);
-  
-    legend
       .append("text")
-      .attr("x", width - 25)
-      .attr("y", -margin.top / 2 + 9)
-      .attr("dy", "0.35em")
-      .style("text-anchor", "end")
-      .text((d) => d);
+      .attr("x", chartConfig.width / 2)
+      .attr("y", chartConfig.height / 2)
+      .attr("text-anchor", "middle")
+      .style("font-size", "14px")
+      .text("No data available in this range");
+    return;
   }
-  fetch("./data/hour.json")
-  .then((response) => response.json())
-  .then((data) => {
-    createLineChartConsumption("line-chart-consumption", data);
-  })
-  .catch((error) => console.error("Erreur lors du chargement des données :", error));
-  
+}
