@@ -1222,5 +1222,158 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
     });
-});
 
+    
+    document.addEventListener("DOMContentLoaded", function () {
+      // Charger les données JSON
+      fetch("./data/hour.json")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log("Données JSON chargées :", data);
+          setupMetricSelection(data); // Configurer la sélection des métriques
+        })
+        .catch((error) => {
+          console.error("Erreur lors du chargement des données :", error);
+        });
+    
+      function setupMetricSelection(data) {
+        const checkboxes = document.querySelectorAll(
+          "#checkbox-section input[type='checkbox']"
+        );
+        const selectedMetrics = new Set();
+    
+        checkboxes.forEach((checkbox) => {
+          checkbox.addEventListener("change", () => {
+            const metric = checkbox.id.replace("-checkbox", ""); // Récupère le nom de la métrique
+    
+            if (checkbox.checked) {
+              selectedMetrics.add(metric);
+            } else {
+              selectedMetrics.delete(metric);
+            }
+    
+            console.log("Métriques sélectionnées :", selectedMetrics);
+    
+            // Vérifier si exactement 3 métriques sont sélectionnées
+            if (selectedMetrics.size === 3) {
+              console.log("Trois métriques sélectionnées. Génération du graphique.");
+              updateRankChart(data, Array.from(selectedMetrics)); // Mettre à jour le graphique
+            } else {
+              console.warn(
+                "Veuillez sélectionner exactement 3 métriques pour afficher le graphique."
+              );
+              d3.select("#rank-chart-container").select("svg").remove();
+            }
+          });
+        });
+      }
+    
+      function updateRankChart(data, selectedMetrics) {
+        const filteredData = data.map((d) => {
+          const result = { fecha_servidor: d.fecha_servidor };
+          selectedMetrics.forEach((metric) => {
+            result[metric.toUpperCase()] =
+              d[`WORKSTATION_${metric.toUpperCase()}_POWER`] || 0;
+          });
+          return result;
+        });
+    
+        console.log("Données filtrées :", filteredData);
+    
+        createRankChangeChart("rank-chart-container", filteredData, selectedMetrics);
+      }
+    
+      function createRankChangeChart(containerId, data, metrics) {
+        console.log("Création du graphique de rang...");
+        d3.select(`#${containerId}`).select("svg").remove();
+    
+        const margin = { top: 20, right: 20, bottom: 50, left: 50 };
+        const width = 600 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+    
+        const svg = d3
+          .select(`#${containerId}`)
+          .append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
+    
+        const parseDate = d3.timeParse("%Y-%m-%dT%H:%M:%S");
+        data.forEach((d) => {
+          d.fecha_servidor = parseDate(d.fecha_servidor);
+        });
+    
+        const x = d3
+          .scaleTime()
+          .domain(d3.extent(data, (d) => d.fecha_servidor))
+          .range([0, width]);
+    
+        const y = d3.scalePoint().domain([1, 2, 3]).range([0, height]);
+    
+        const color = d3
+          .scaleOrdinal()
+          .domain(metrics)
+          .range(["#ff8c00", "#8c564b", "#1f77b4"]);
+    
+        const rankData = metrics.map((metric) => ({
+          name: metric,
+          values: data.map((d) => ({
+            date: d.fecha_servidor,
+            rank: getRank(d, metrics, metric),
+          })),
+        }));
+    
+        svg
+          .append("g")
+          .attr("transform", `translate(0, ${height})`)
+          .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%d/%m")));
+    
+        svg.append("g").call(d3.axisLeft(y));
+    
+        rankData.forEach((metricData) => {
+          const line = d3
+            .line()
+            .x((d) => x(d.date))
+            .y((d) => y(d.rank))
+            .curve(d3.curveBasis);
+    
+          svg
+            .append("path")
+            .datum(metricData.values)
+            .attr("fill", "none")
+            .attr("stroke", color(metricData.name))
+            .attr("stroke-width", 2)
+            .attr("d", line);
+        });
+    
+        svg
+          .selectAll(".legend")
+          .data(metrics)
+          .enter()
+          .append("text")
+          .attr("x", width - 60)
+          .attr("y", (d, i) => 20 + i * 20)
+          .style("fill", (d) => color(d))
+          .style("font-size", "12px")
+          .style("font-weight", "bold")
+          .text((d) => d.toUpperCase());
+      }
+    
+      function getRank(d, metrics, currentMetric) {
+        const values = metrics.map(
+          (metric) => d[`WORKSTATION_${metric.toUpperCase()}_POWER`] || 0
+        );
+        const sorted = [...values].sort((a, b) => b - a);
+        const rank =
+          sorted.indexOf(d[`WORKSTATION_${currentMetric.toUpperCase()}_POWER`]) + 1;
+        return rank;
+      }
+    });
+    
+});
