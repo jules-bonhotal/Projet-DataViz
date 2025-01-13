@@ -1045,143 +1045,182 @@ function createStackedAreaChart(containerId, data) {
     return;
   }
 }
-fetch("./data/hour.json")
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
+
+document.addEventListener("DOMContentLoaded", function () {
+  const path = "./data/hour.json";
+
+  // Vérifier si toutes les métriques sont sélectionnées
+  function areAllMetricsSelected() {
+    const checkboxes = document.querySelectorAll(
+      "#checkbox-section input[type='checkbox']"
+    );
+    return Array.from(checkboxes).every((checkbox) => checkbox.checked);
+  }
+
+  // Charger les données depuis le fichier JSON
+  async function fetchData(path) {
+    const response = await fetch(path);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();
-  })
-  .then((data) => {
-    console.log("Données JSON chargées :", data);
-    const selectedMetrics = [
-      "voltaje",
-      "corriente",
-      "frecuencia",
-      "energia",
-      "fp",
-    ]; // Liste des métriques à inclure
-    const preparedData = getSelectedMetricsData(data, selectedMetrics);
-    const matrixData = calculateCorrelationMatrix(preparedData, selectedMetrics);
-    createCorrelationHeatmap("correlation-matrix-container", matrixData);
-  })
-  .catch((error) => {
-    console.error("Erreur lors du chargement des données :", error);
-  });
+  }
 
-function getSelectedMetricsData(data, selectedMetrics) {
-  return data.map((d) =>
-    selectedMetrics.reduce((acc, metric) => {
-      acc[metric] = d[metric] || 0; // Remplace les valeurs nulles ou indéfinies par 0
-      return acc;
-    }, {})
-  );
-}
+  // Récupérer les données des métriques sélectionnées
+  function getSelectedMetricsData(data, selectedMetrics) {
+    return data.map((d) =>
+      selectedMetrics.reduce((acc, metric) => {
+        acc[metric] = d[metric] || 0; // Remplace les valeurs nulles ou indéfinies par 0
+        return acc;
+      }, {})
+    );
+  }
 
-function calculateCorrelationMatrix(data, selectedMetrics) {
-  const matrix = [];
-  const keys = selectedMetrics;
+  // Calculer la matrice de corrélation
+  function calculateCorrelationMatrix(data, selectedMetrics) {
+    const matrix = [];
+    const keys = selectedMetrics;
 
-  keys.forEach((key1, i) => {
-    matrix[i] = [];
-    keys.forEach((key2, j) => {
-      const x = data.map((d) => d[key1]);
-      const y = data.map((d) => d[key2]);
+    keys.forEach((key1, i) => {
+      matrix[i] = [];
+      keys.forEach((key2, j) => {
+        const x = data.map((d) => d[key1]);
+        const y = data.map((d) => d[key2]);
 
-      console.log(`Calcul de la corrélation entre ${key1} et ${key2}`);
-      console.log("Série X :", x);
-      console.log("Série Y :", y);
-
-      matrix[i][j] = pearsonCorrelation(x, y);
+        console.log(`Calcul de la corrélation entre ${key1} et ${key2}`);
+        matrix[i][j] = pearsonCorrelation(x, y);
+      });
     });
-  });
 
-  console.log("Matrice de corrélation :", matrix);
-  return { matrix, keys };
-}
+    return { matrix, keys };
+  }
 
-function pearsonCorrelation(x, y) {
-  const n = x.length;
-  const meanX = d3.mean(x);
-  const meanY = d3.mean(y);
+  // Calculer la corrélation de Pearson
+  function pearsonCorrelation(x, y) {
+    const n = x.length;
+    const meanX = d3.mean(x);
+    const meanY = d3.mean(y);
 
-  const numerator = d3.sum(x.map((xi, i) => (xi - meanX) * (y[i] - meanY)));
-  const denominator = Math.sqrt(
-    d3.sum(x.map((xi) => Math.pow(xi - meanX, 2))) *
-      d3.sum(y.map((yi) => Math.pow(yi - meanY, 2)))
-  );
+    const numerator = d3.sum(x.map((xi, i) => (xi - meanX) * (y[i] - meanY)));
+    const denominator = Math.sqrt(
+      d3.sum(x.map((xi) => Math.pow(xi - meanX, 2))) *
+        d3.sum(y.map((yi) => Math.pow(yi - meanY, 2)))
+    );
 
-  if (denominator === 0) return 0;
+    return denominator === 0 ? 0 : numerator / denominator;
+  }
 
-  console.log("Corrélation calculée :", numerator / denominator);
-  return numerator / denominator;
-}
+  // Créer la heatmap
+  function createCorrelationHeatmap(containerId, matrixData) {
+    const { matrix, keys } = matrixData;
+    const cellSize = 70; // Taille des cellules
+    const labelOffset = 150; // Espace pour les étiquettes
+    const width = cellSize * keys.length;
+    const height = cellSize * keys.length;
+  
+    // Supprimer tout graphique existant
+    d3.select(`#${containerId}`).select("svg").remove();
+  
+    const svg = d3
+      .select(`#${containerId}`)
+      .append("svg")
+      .attr("width", width + labelOffset)
+      .attr("height", height + labelOffset)
+      .append("g")
+      .attr("transform", `translate(${labelOffset}, 50)`);
+  
+    const colorScale = d3
+      .scaleLinear()
+      .domain([-1, 0, 1])
+      .range(["#d73027", "#ffffbf", "#1a9850"]);
+  
+    // Ajouter les cellules de la heatmap
+    svg
+      .selectAll("rect")
+      .data(matrix.flat())
+      .enter()
+      .append("rect")
+      .attr("x", (_, i) => (i % keys.length) * cellSize)
+      .attr("y", (_, i) => Math.floor(i / keys.length) * cellSize)
+      .attr("width", cellSize)
+      .attr("height", cellSize)
+      .style("fill", (d) => colorScale(d))
+      .style("stroke", "black");
+  
+    // Ajouter les valeurs dans les cellules
+    svg
+      .selectAll("text.cell-value")
+      .data(matrix.flat())
+      .enter()
+      .append("text")
+      .attr("class", "cell-value")
+      .attr("x", (_, i) => (i % keys.length) * cellSize + cellSize / 2)
+      .attr("y", (_, i) => Math.floor(i / keys.length) * cellSize + cellSize / 2)
+      .attr("dy", ".35em")
+      .style("text-anchor", "middle")
+      .style("font-size", "14px")
+      .style("font-weight", "bold")
+      .style("fill", "black")
+      .text((d) => (d !== null ? d.toFixed(2) : "N/A"));
+  
+    // Ajouter les labels des colonnes (axe X) en vertical et gras
+    svg
+      .selectAll(".x-label")
+      .data(keys)
+      .enter()
+      .append("text")
+      .attr("x", (_, i) => i * cellSize + cellSize / 2) // Centré horizontalement sur la cellule
+      .attr("y", -35) // Position légèrement au-dessus
+      .attr("transform", (_, i) => `rotate(-90, ${i * cellSize + cellSize / 2}, -10)`) // Rotation verticale
+      .attr("text-anchor", "middle")
+      .style("font-size", "12px")
+      .style("font-weight", "bold") // Gras
+      .text((d) => d.toUpperCase());
+  }
+  
+  // Écouter les changements sur les cases à cocher
+  document
+    .querySelectorAll("#checkbox-section input[type='checkbox']")
+    .forEach((checkbox) => {
+      checkbox.addEventListener("change", async () => {
+        if (areAllMetricsSelected()) {
+          try {
+            // Charger les données
+            const data = await fetchData(path);
 
-function createCorrelationHeatmap(containerId, matrixData) {
-  const { matrix, keys } = matrixData;
-  const cellSize = 70; // Taille des cellules
-  const labelOffset = 150; // Espace pour les étiquettes
-  const width = cellSize * keys.length;
-  const height = cellSize * keys.length;
+            // Calculer et afficher la matrice de corrélation
+            const selectedMetrics = [
+              "voltaje",
+              "corriente",
+              "frecuencia",
+              "energia",
+              "fp",
+            ];
+            const preparedData = getSelectedMetricsData(
+              data,
+              selectedMetrics
+            );
+            const matrixData = calculateCorrelationMatrix(
+              preparedData,
+              selectedMetrics
+            );
 
-  d3.select(`#${containerId}`).select("svg").remove();
+            // Créer la heatmap
+            createCorrelationHeatmap(
+              "correlation-matrix-container",
+              matrixData
+            );
+            console.log("Matrice de corrélation générée avec succès.");
+          } catch (error) {
+            console.error(
+              "Erreur lors de la génération de la matrice de corrélation :",
+              error
+            );
+          }
+        } else {
+          // Supprimer la heatmap si toutes les métriques ne sont pas sélectionnées
+          d3.select("#correlation-matrix-container").select("svg").remove();
+          console.warn("Toutes les métriques doivent être sélectionnées.");
+        }
+      });
+    });
+});
 
-  const svg = d3
-    .select(`#${containerId}`)
-    .append("svg")
-    .attr("width", width + labelOffset)
-    .attr("height", height + labelOffset)
-    .append("g")
-    .attr("transform", `translate(${labelOffset}, 50)`);
-
-  const colorScale = d3
-    .scaleLinear()
-    .domain([-1, 0, 1])
-    .range(["#d73027", "#ffffbf", "#1a9850"]);
-
-  // Ajouter les cellules de la heatmap
-  svg
-    .selectAll("rect")
-    .data(matrix.flat())
-    .enter()
-    .append("rect")
-    .attr("x", (_, i) => (i % keys.length) * cellSize)
-    .attr("y", (_, i) => Math.floor(i / keys.length) * cellSize)
-    .attr("width", cellSize)
-    .attr("height", cellSize)
-    .style("fill", (d) => colorScale(d))
-    .style("stroke", "black");
-
-  // Ajouter les valeurs dans les cellules
-  svg
-    .selectAll("text.cell-value")
-    .data(matrix.flat())
-    .enter()
-    .append("text")
-    .attr("class", "cell-value")
-    .attr("x", (_, i) => (i % keys.length) * cellSize + cellSize / 2)
-    .attr("y", (_, i) => Math.floor(i / keys.length) * cellSize + cellSize / 2)
-    .attr("dy", ".35em")
-    .style("text-anchor", "middle")
-    .style("font-size", "14px")
-    .style("font-weight", "bold")
-    .style("fill", "black")
-    .text((d) => (d !== null ? d.toFixed(2) : "N/A"));
-
-  // Ajouter les labels des colonnes (axe X) en vertical
-  svg
-  .selectAll(".x-label")
-  .data(keys)
-  .enter()
-  .append("text")
-  .attr("x", (_, i) => i * cellSize + cellSize / 2) // Centrer sur la cellule
-  .attr("y", -39) // Ajuster la hauteur au-dessus de la cellule
-  .attr("transform", (_, i) => `rotate(-90, ${i * cellSize + cellSize / 2}, -10)`) // Rotation verticale
-  .attr("text-anchor", "middle") // Alignement centré
-  .style("font-size", "9px") // Réduction de la taille pour éviter tout encombrement
-  .style("font-weight", "bold") // Texte en gras pour meilleure lisibilité
-  .style("fill", "black")
-  .text((d) => d.toUpperCase());
-
-
-}
