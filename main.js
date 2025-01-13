@@ -931,12 +931,33 @@ const initialize = () => {
 
 initialize();
 
+// Fonction pour afficher ou supprimer le graphique lorsqu'on clique sur le bouton
+function setupConsumptionButton(data) {
+  const button = document.getElementById("consumption-checkbox");
+  const containerId = "stacked-area-chart-container";
+
+  // Ajouter un événement "change" au bouton ou checkbox
+  button.addEventListener("change", () => {
+    if (button.checked) {
+      // Supprimer l'ancien graphique (par précaution)
+      d3.select(`#${containerId}`).select("svg").remove();
+
+      // Créer le graphique des pourcentages de consommation
+      createStackedAreaChart(containerId, data);
+    } else {
+      // Supprimer le graphique si la case est décochée
+      d3.select(`#${containerId}`).select("svg").remove();
+    }
+  });
+}
+
+// Fonction pour créer le graphique (déjà définie dans votre code)
 function createStackedAreaChart(containerId, data) {
   const margin = { top: 40, right: 30, bottom: 30, left: 60 },
     width = 600 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
-  // Parser les dates et préparer les données
+  // Préparation des données
   const dateParser = d3.timeParse("%Y-%m-%dT%H:%M:%S");
   const preparedData = data
     .map((d) => ({
@@ -950,9 +971,13 @@ function createStackedAreaChart(containerId, data) {
   if (!preparedData.length) {
     console.warn("Aucune donnée valide pour afficher le graphique.");
     d3.select(`#${containerId}`)
+      .selectAll("*")
+      .remove(); // Supprimer tout contenu précédent
+    d3.select(`#${containerId}`)
       .append("p")
-      .text("Aucune donnée valide.")
-      .style("color", "red");
+      .text("Aucune donnée valide pour afficher le graphique.")
+      .style("color", "red")
+      .style("text-align", "center");
     return;
   }
 
@@ -973,14 +998,13 @@ function createStackedAreaChart(containerId, data) {
     .domain(["CPU", "GPU", "RAM"])
     .range(["#ff5733", "#33ff57", "#3357ff"]);
 
-  // Générer les données empilées
   const stack = d3.stack().keys(["CPU", "GPU", "RAM"]);
   const stackedData = stack(preparedData);
 
   // Supprimer l'ancien graphique
   d3.select(`#${containerId}`).select("svg").remove();
 
-  // Création du conteneur SVG
+  // Créer un conteneur SVG
   const svg = d3
     .select(`#${containerId}`)
     .append("svg")
@@ -989,7 +1013,7 @@ function createStackedAreaChart(containerId, data) {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Créer une aire empilée
+  // Ajouter une aire empilée
   const area = d3
     .area()
     .x((d) => x(d.data.date))
@@ -997,7 +1021,6 @@ function createStackedAreaChart(containerId, data) {
     .y1((d) => y(d[1]))
     .curve(d3.curveBasis);
 
-  // Ajouter les couches
   svg
     .selectAll("path")
     .data(stackedData)
@@ -1015,7 +1038,7 @@ function createStackedAreaChart(containerId, data) {
 
   svg.append("g").call(d3.axisLeft(y));
 
-  // Ajouter la légende
+  // Ajouter une légende
   const legend = svg
     .selectAll(".legend")
     .data(color.domain())
@@ -1041,14 +1064,15 @@ function createStackedAreaChart(containerId, data) {
     .text((d) => d);
 }
 
-// Appel de la fonction avec vérification des données
+// Charger les données et configurer le bouton
 fetch("./data/hour.json")
   .then((response) => response.json())
   .then((data) => {
-    console.log("Données brutes :", data);
-    createStackedAreaChart("stacked-area-chart-container", data);
+    console.log("Données chargées :", data);
+
+    // Configurer le bouton pour afficher le graphique
+    setupConsumptionButton(data);
   })
-  .catch((error) =>
-    console.error("Erreur lors du chargement des données :", error)
-  );
-  
+  .catch((error) => {
+    console.error("Erreur lors du chargement des données :", error);
+  });
