@@ -1118,7 +1118,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return denominator === 0 ? 0 : numerator / denominator;
   }
 
-  function createCorrelationHeatmap(containerId, matrixData) {
+  function createCorrelationHeatmap(containerId, matrixData, title) {
     const { matrix, keys } = matrixData;
     const cellSize = 70; // Taille des cellules
     const labelOffset = 150; // Espace pour les étiquettes
@@ -1132,9 +1132,19 @@ document.addEventListener("DOMContentLoaded", function () {
       .select(`#${containerId}`)
       .append("svg")
       .attr("width", width + labelOffset)
-      .attr("height", height + labelOffset)
+      .attr("height", height + labelOffset + 100) // Ajouter de l'espace pour le titre et la légende
       .append("g")
-      .attr("transform", `translate(${labelOffset}, 50)`);
+      .attr("transform", `translate(${labelOffset}, 70)`);
+  
+    // Ajouter un titre en haut de la figure
+    d3.select(`#${containerId} svg`)
+      .append("text")
+      .attr("x", (width + labelOffset) / 2) // Centrer le texte
+      .attr("y", 20) // Position tout en haut
+      .style("text-anchor", "middle")
+      .style("font-size", "18px")
+      .style("font-weight", "bold")
+      .text(title); // Titre dynamique
   
     const colorScale = d3
       .scaleLinear()
@@ -1170,36 +1180,64 @@ document.addEventListener("DOMContentLoaded", function () {
       .style("fill", "black")
       .text((d) => (d !== null ? d.toFixed(2) : "N/A"));
   
-   // Ajouter les labels des colonnes (axe X) avec espacement uniforme
-svg
-.selectAll(".x-label")
-.data(keys)
-.enter()
-.append("text")
-.attr("x", (_, i) => i * cellSize + cellSize / 2) // Centrer sur la cellule
-.attr("y", -23) // Position au-dessus des cellules
-.style("text-anchor", "middle") // Centré horizontalement
-.style("font-size", "10px")
-.style("font-weight", "bold") // Texte en gras pour lisibilité
-.style("fill", "black")
-.text((d) => d.toUpperCase());
-
-
+    // Ajouter les labels des colonnes (axe X)
+    svg
+      .selectAll(".x-label")
+      .data(keys)
+      .enter()
+      .append("text")
+      .attr("x", (_, i) => i * cellSize + cellSize / 2)
+      .attr("y", -23)
+      .style("text-anchor", "middle")
+      .style("font-size", "11px")
+      .style("font-weight", "bold")
+      .text((d) => d.toUpperCase());
   
-    // Ajouter les labels des lignes (axe Y) en vertical
+    // Ajouter les labels des lignes (axe Y)
     svg
       .selectAll(".y-label")
       .data(keys)
       .enter()
       .append("text")
-      .attr("x", -10) // Position à gauche des cellules
-      .attr("y", (_, i) => i * cellSize + cellSize / 2) // Centrer sur la cellule
+      .attr("x", -10)
+      .attr("y", (_, i) => i * cellSize + cellSize / 2)
       .attr("dy", ".35em")
-      .style("text-anchor", "end") // Aligné à droite
+      .style("text-anchor", "end")
       .style("font-size", "12px")
-      .style("font-weight", "bold") // Gras pour lisibilité
-      .style("fill", "black")
+      .style("font-weight", "bold")
       .text((d) => d.toUpperCase());
+  
+    // Ajouter une légende
+    const legend = svg
+      .append("g")
+      .attr("class", "legend")
+      .attr("transform", `translate(0, ${height + 30})`);
+  
+    // Couleurs de la légende
+    const legendScale = [-1, -0.5, 0, 0.5, 1];
+    const legendSize = 20;
+  
+    legend
+      .selectAll("rect")
+      .data(legendScale)
+      .enter()
+      .append("rect")
+      .attr("x", (_, i) => i * legendSize * 4)
+      .attr("width", legendSize * 4)
+      .attr("height", legendSize)
+      .style("fill", (d) => colorScale(d));
+  
+    // Texte de la légende
+    legend
+      .selectAll("text")
+      .data(legendScale)
+      .enter()
+      .append("text")
+      .attr("x", (_, i) => i * legendSize * 4 + (legendSize * 2))
+      .attr("y", legendSize + 15)
+      .style("text-anchor", "middle")
+      .style("font-size", "12px")
+      .text((d) => d.toFixed(1));
   }
   
   
