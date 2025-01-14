@@ -9,14 +9,17 @@ const state = {
   startWeekIndex: null,
 };
 
+const chartsWidth = 460;
+const chartsHeight = 350;
+
 // Chart configuration
 const chartConfig = {
   margin: { top: 40, right: 30, bottom: 30, left: 60 },
   get width() {
-    return 460 - this.margin.left - this.margin.right;
+    return chartsWidth - this.margin.left - this.margin.right;
   },
   get height() {
-    return 400 - this.margin.top - this.margin.bottom;
+    return chartsHeight - this.margin.top - this.margin.bottom;
   },
 };
 
@@ -148,25 +151,25 @@ const createLineChart = (containerId, data, valueKey, color) => {
   // switch case to translate the key to the correct title to display
   switch (valueKey) {
     case "voltaje":
-      title = "Voltage";
+      title = "Voltage (V)";
       break;
     case "corriente":
-      title = "Current";
+      title = "Current (A)";
       break;
     case "frecuencia":
-      title = "Frequency";
+      title = "Frequency (Hz)";
       break;
     case "energia":
-      title = "Energy";
+      title = "Energy (kWh)";
       break;
     case "ESP32_temp":
-      title = "Temperature";
+      title = "Temperature (°C)";
       break;
     case "fp":
       title = "Power Factor";
       break;
     case "consumo":
-      title = "Consumption";
+      title = "Consumption (%)";
       break;
     default:
       valueKey = "Unknown";
@@ -175,7 +178,7 @@ const createLineChart = (containerId, data, valueKey, color) => {
   const svg = d3
     .select(`#${containerId}`)
     .append("svg")
-    .style("background-color", "white")
+    //.style("background-color", "white")
     .attr(
       "width",
       chartConfig.width + chartConfig.margin.left + chartConfig.margin.right
@@ -812,11 +815,13 @@ const renderSystem = {
         const chartId = `chart-${metric}`;
 
         if (checkbox?.checked) {
-          if (!document.getElementById(chartId)) {
-            d3.select("#line-chart-section").append("div").attr("id", chartId);
-          }
           /************** AJOUT **************/
           if (chartId === "chart-consumption") {
+            if (!document.getElementById(chartId)) {
+              d3.select("#comsumption-section")
+                .append("div")
+                .attr("id", chartId);
+            }
             const dateParser = d3.timeParse("%Y-%m-%dT%H:%M:%S");
 
             const parsedData = data
@@ -844,6 +849,11 @@ const renderSystem = {
             createPieChart("chart-consumption", chartData, colors);
             createStackedAreaChart("stacked-area-chart-container", data);
           } else {
+            if (!document.getElementById(chartId)) {
+              d3.select("#line-chart-section")
+                .append("div")
+                .attr("id", chartId);
+            }
             createLineChart(chartId, data, config.key, config.color);
           }
           /************** FIN AJOUT **************/
@@ -931,9 +941,9 @@ initialize();
 function createStackedAreaChart(containerId, data) {
   d3.select(`#${containerId}`).select("svg").remove();
 
-  const margin = { top: 40, right: 30, bottom: 30, left: 60 },
-    width = 600 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+  const margin = { top: 40, right: 30, bottom: 30, left: 0 },
+    width = chartsWidth - margin.left - margin.right,
+    height = chartsHeight - margin.top - margin.bottom;
 
   // Préparation des données
   const dateParser = d3.timeParse("%Y-%m-%dT%H:%M:%S");
@@ -1062,7 +1072,10 @@ fetch("./data/hour.json")
       "fp",
     ]; // Liste des métriques à inclure
     const preparedData = getSelectedMetricsData(data, selectedMetrics);
-    const matrixData = calculateCorrelationMatrix(preparedData, selectedMetrics);
+    const matrixData = calculateCorrelationMatrix(
+      preparedData,
+      selectedMetrics
+    );
     createCorrelationHeatmap("correlation-matrix-container", matrixData);
   })
   .catch((error) => {
@@ -1119,7 +1132,7 @@ function pearsonCorrelation(x, y) {
 
 function createCorrelationHeatmap(containerId, matrixData) {
   const { matrix, keys } = matrixData;
-  const cellSize = 70; // Taille des cellules
+  const cellSize = 50; // Taille des cellules
   const labelOffset = 100; // Espace pour les étiquettes
   const width = cellSize * keys.length;
   const height = cellSize * keys.length;
@@ -1130,7 +1143,7 @@ function createCorrelationHeatmap(containerId, matrixData) {
     .select(`#${containerId}`)
     .append("svg")
     .attr("width", width + labelOffset + 50) // Ajustement pour les labels
-    .attr("height", height + labelOffset + 50) // Ajustement pour les labels
+    .attr("height", chartsHeight) // Ajustement pour les labels
     .append("g")
     .attr("transform", `translate(${labelOffset}, ${labelOffset / 2})`);
 
@@ -1178,7 +1191,10 @@ function createCorrelationHeatmap(containerId, matrixData) {
     .attr("y", -labelOffset / 2) // Placer en haut
     .attr("text-anchor", "middle")
     .attr("dominant-baseline", "middle")
-    .attr("transform", (_, i) => `translate(${i * cellSize + cellSize / 2}, 0) rotate(-90)`) // Rotation à -90 degrés
+    .attr(
+      "transform",
+      (_, i) => `translate(${i * cellSize + cellSize / 2}, 0) rotate(-90)`
+    ) // Rotation à -90 degrés
     .style("font-size", "14px")
     .style("font-weight", "bold")
     .text((d) => d.toUpperCase().replace(/_/g, " "));
@@ -1197,4 +1213,3 @@ function createCorrelationHeatmap(containerId, matrixData) {
     .style("font-weight", "bold")
     .text((d) => d.toUpperCase().replace(/_/g, " "));
 }
-
