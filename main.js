@@ -939,8 +939,7 @@ initialize();
 
 function createStackedAreaChart(containerId, data) {
   d3.select(`#${containerId}`).select("svg").remove();
-
-  const margin = { top: 40, right: 30, bottom: 30, left: 0 },
+  const margin = { top: 40, right: 80, bottom: 30, left: 20 },
     width = chartsWidth - margin.left - margin.right,
     height = chartsHeight - margin.top - margin.bottom;
 
@@ -1137,8 +1136,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function createCorrelationHeatmap(containerId, matrixData, title) {
     const { matrix, keys } = matrixData;
-    const cellSize = 70; // Taille des cellules
-    const labelOffset = 150; // Espace pour les étiquettes
+    const cellSize = 65; // Taille des cellules
+    const labelOffset = 70; // Espace pour les étiquettes
     const width = cellSize * keys.length;
     const height = cellSize * keys.length;
 

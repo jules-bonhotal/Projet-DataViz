@@ -30,6 +30,10 @@ body {
   background-color: var(--background-light);
 }
 
+main {
+  height: 95vh;
+}
+
 /** Sidebar filter menu **/
 
 .sidebar-menu {
