@@ -937,7 +937,6 @@ const initialize = () => {
 
 initialize();
 
-// Fonction pour créer le graphique (déjà définie dans votre code)
 function createStackedAreaChart(containerId, data) {
   d3.select(`#${containerId}`).select("svg").remove();
 
@@ -991,6 +990,16 @@ function createStackedAreaChart(containerId, data) {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
+  // Ajouter le titre en haut
+  d3.select(`#${containerId} svg`)
+    .append("text")
+    .attr("x", (width + margin.left + margin.right) / 2)
+    .attr("y", 30) // Position au-dessus du graphique
+    .attr("text-anchor", "middle")
+    .style("font-size", "18px")
+    .style("font-weight", "bold")
+    .text("Energy Consumption by Component (CPU, GPU, RAM)");
+
   // Ajouter une aire empilée
   const area = d3
     .area()
@@ -1016,200 +1025,441 @@ function createStackedAreaChart(containerId, data) {
 
   svg.append("g").call(d3.axisLeft(y));
 
-  // Ajouter une légende
+  // Ajouter une légende (à droite du graphique)
   const legend = svg
-    .selectAll(".legend")
-    .data(color.domain())
-    .enter()
     .append("g")
     .attr("class", "legend")
-    .attr("transform", (d, i) => `translate(0,${i * 20})`);
+    .attr("transform", `translate(${width + 20}, 0)`); // Position à droite
 
+  // Ajouter les rectangles colorés de la légende
   legend
+    .selectAll("rect")
+    .data(color.domain())
+    .enter()
     .append("rect")
-    .attr("x", width - 18)
-    .attr("y", -20)
+    .attr("x", 0)
+    .attr("y", (_, i) => i * 25)
     .attr("width", 18)
     .attr("height", 18)
-    .style("fill", color);
+    .style("fill", (d) => color(d));
 
+  // Ajouter les labels de la légende
   legend
+    .selectAll("text")
+    .data(color.domain())
+    .enter()
     .append("text")
-    .attr("x", width - 24)
-    .attr("y", -10)
+    .attr("x", 25) // Décalage du texte par rapport aux rectangles
+    .attr("y", (_, i) => i * 25 + 9) // Alignement vertical
     .attr("dy", ".35em")
-    .style("text-anchor", "end")
+    .style("text-anchor", "start")
+    .style("font-size", "12px")
     .text((d) => d);
 
+  // Ajouter un message si les données sont vides ou nulles
   if (
     preparedData.length === 0 ||
     preparedData.every((d) => d.CPU === 0 && d.GPU === 0 && d.RAM === 0)
   ) {
     svg
       .append("text")
-      .attr("x", chartConfig.width / 2)
-      .attr("y", chartConfig.height / 2)
+      .attr("x", width / 2)
+      .attr("y", height / 2)
       .attr("text-anchor", "middle")
       .style("font-size", "14px")
+      .style("fill", "red")
       .text("No data available in this range");
     return;
   }
 }
-fetch("./data/hour.json")
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then((data) => {
-    console.log("Données JSON chargées :", data);
-    const selectedMetrics = [
-      "voltaje",
-      "corriente",
-      "frecuencia",
-      "energia",
-      "fp",
-    ]; // Liste des métriques à inclure
-    const preparedData = getSelectedMetricsData(data, selectedMetrics);
-    const matrixData = calculateCorrelationMatrix(
-      preparedData,
-      selectedMetrics
+
+document.addEventListener("DOMContentLoaded", function () {
+  const path = "./data/hour.json";
+
+  // Vérifier si toutes les métriques sont sélectionnées
+  function areAllMetricsSelected() {
+    const checkboxes = document.querySelectorAll(
+      "#checkbox-section input[type='checkbox']"
     );
-    createCorrelationHeatmap("correlation-matrix-container", matrixData);
-  })
-  .catch((error) => {
-    console.error("Erreur lors du chargement des données :", error);
-  });
+    return Array.from(checkboxes).every((checkbox) => checkbox.checked);
+  }
 
-function getSelectedMetricsData(data, selectedMetrics) {
-  return data.map((d) =>
-    selectedMetrics.reduce((acc, metric) => {
-      acc[metric] = d[metric] || 0; // Remplace les valeurs nulles ou indéfinies par 0
-      return acc;
-    }, {})
-  );
-}
+  // Charger les données depuis le fichier JSON
+  async function fetchData(path) {
+    const response = await fetch(path);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return response.json();
+  }
 
-function calculateCorrelationMatrix(data, selectedMetrics) {
-  const matrix = [];
-  const keys = selectedMetrics;
+  // Récupérer les données des métriques sélectionnées
+  function getSelectedMetricsData(data, selectedMetrics) {
+    return data.map((d) =>
+      selectedMetrics.reduce((acc, metric) => {
+        acc[metric] = d[metric] || 0; // Remplace les valeurs nulles ou indéfinies par 0
+        return acc;
+      }, {})
+    );
+  }
 
-  keys.forEach((key1, i) => {
-    matrix[i] = [];
-    keys.forEach((key2, j) => {
-      const x = data.map((d) => d[key1]);
-      const y = data.map((d) => d[key2]);
+  // Calculer la matrice de corrélation
+  function calculateCorrelationMatrix(data, selectedMetrics) {
+    const matrix = [];
+    const keys = selectedMetrics;
 
-      console.log(`Calcul de la corrélation entre ${key1} et ${key2}`);
-      console.log("Série X :", x);
-      console.log("Série Y :", y);
+    keys.forEach((key1, i) => {
+      matrix[i] = [];
+      keys.forEach((key2, j) => {
+        const x = data.map((d) => d[key1]);
+        const y = data.map((d) => d[key2]);
 
-      matrix[i][j] = pearsonCorrelation(x, y);
+        console.log(`Calcul de la corrélation entre ${key1} et ${key2}`);
+        matrix[i][j] = pearsonCorrelation(x, y);
+      });
     });
+
+    return { matrix, keys };
+  }
+
+  // Calculer la corrélation de Pearson
+  function pearsonCorrelation(x, y) {
+    const n = x.length;
+    const meanX = d3.mean(x);
+    const meanY = d3.mean(y);
+
+    const numerator = d3.sum(x.map((xi, i) => (xi - meanX) * (y[i] - meanY)));
+    const denominator = Math.sqrt(
+      d3.sum(x.map((xi) => Math.pow(xi - meanX, 2))) *
+        d3.sum(y.map((yi) => Math.pow(yi - meanY, 2)))
+    );
+
+    return denominator === 0 ? 0 : numerator / denominator;
+  }
+
+  function createCorrelationHeatmap(containerId, matrixData, title) {
+    const { matrix, keys } = matrixData;
+    const cellSize = 70; // Taille des cellules
+    const labelOffset = 150; // Espace pour les étiquettes
+    const width = cellSize * keys.length;
+    const height = cellSize * keys.length;
+
+    // Supprimer tout graphique existant
+    d3.select(`#${containerId}`).select("svg").remove();
+
+    const svg = d3
+      .select(`#${containerId}`)
+      .append("svg")
+      .attr("width", width + labelOffset)
+      .attr("height", height + labelOffset + 100) // Ajouter de l'espace pour le titre et la légende
+      .append("g")
+      .attr("transform", `translate(${labelOffset}, 70)`);
+
+    // Ajouter un titre en haut de la figure
+    d3.select(`#${containerId} svg`)
+      .append("text")
+      .attr("x", (width + labelOffset) / 2) // Centrer le texte
+      .attr("y", 20) // Position tout en haut
+      .style("text-anchor", "middle")
+      .style("font-size", "18px")
+      .style("font-weight", "bold")
+      .text(title); // Titre dynamique
+
+    const colorScale = d3
+      .scaleLinear()
+      .domain([-1, 0, 1])
+      .range(["#d73027", "#ffffbf", "#1a9850"]);
+
+    // Ajouter les cellules de la heatmap
+    svg
+      .selectAll("rect")
+      .data(matrix.flat())
+      .enter()
+      .append("rect")
+      .attr("x", (_, i) => (i % keys.length) * cellSize)
+      .attr("y", (_, i) => Math.floor(i / keys.length) * cellSize)
+      .attr("width", cellSize)
+      .attr("height", cellSize)
+      .style("fill", (d) => colorScale(d))
+      .style("stroke", "black");
+
+    // Ajouter les valeurs dans les cellules
+    svg
+      .selectAll("text.cell-value")
+      .data(matrix.flat())
+      .enter()
+      .append("text")
+      .attr("class", "cell-value")
+      .attr("x", (_, i) => (i % keys.length) * cellSize + cellSize / 2)
+      .attr(
+        "y",
+        (_, i) => Math.floor(i / keys.length) * cellSize + cellSize / 2
+      )
+      .attr("dy", ".35em")
+      .style("text-anchor", "middle")
+      .style("font-size", "14px")
+      .style("font-weight", "bold")
+      .style("fill", "black")
+      .text((d) => (d !== null ? d.toFixed(2) : "N/A"));
+
+    // Ajouter les labels des colonnes (axe X)
+    svg
+      .selectAll(".x-label")
+      .data(keys)
+      .enter()
+      .append("text")
+      .attr("x", (_, i) => i * cellSize + cellSize / 2)
+      .attr("y", -23)
+      .style("text-anchor", "middle")
+      .style("font-size", "11px")
+      .style("font-weight", "bold")
+      .text((d) => d.toUpperCase());
+
+    // Ajouter les labels des lignes (axe Y)
+    svg
+      .selectAll(".y-label")
+      .data(keys)
+      .enter()
+      .append("text")
+      .attr("x", -10)
+      .attr("y", (_, i) => i * cellSize + cellSize / 2)
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .style("font-size", "12px")
+      .style("font-weight", "bold")
+      .text((d) => d.toUpperCase());
+
+    // Ajouter une légende
+    const legend = svg
+      .append("g")
+      .attr("class", "legend")
+      .attr("transform", `translate(0, ${height + 30})`);
+
+    // Couleurs de la légende
+    const legendScale = [-1, -0.5, 0, 0.5, 1];
+    const legendSize = 20;
+
+    legend
+      .selectAll("rect")
+      .data(legendScale)
+      .enter()
+      .append("rect")
+      .attr("x", (_, i) => i * legendSize * 4)
+      .attr("width", legendSize * 4)
+      .attr("height", legendSize)
+      .style("fill", (d) => colorScale(d));
+
+    // Texte de la légende
+    legend
+      .selectAll("text")
+      .data(legendScale)
+      .enter()
+      .append("text")
+      .attr("x", (_, i) => i * legendSize * 4 + legendSize * 2)
+      .attr("y", legendSize + 15)
+      .style("text-anchor", "middle")
+      .style("font-size", "12px")
+      .text((d) => d.toFixed(1));
+  }
+
+  // Écouter les changements sur les cases à cocher
+  document
+    .querySelectorAll("#checkbox-section input[type='checkbox']")
+    .forEach((checkbox) => {
+      checkbox.addEventListener("change", async () => {
+        if (areAllMetricsSelected()) {
+          try {
+            // Charger les données
+            const data = await fetchData(path);
+
+            // Calculer et afficher la matrice de corrélation
+            const selectedMetrics = [
+              "voltaje",
+              "corriente",
+              "frecuencia",
+              "energia",
+              "fp",
+            ];
+            const preparedData = getSelectedMetricsData(data, selectedMetrics);
+            const matrixData = calculateCorrelationMatrix(
+              preparedData,
+              selectedMetrics
+            );
+
+            // Créer la heatmap
+            createCorrelationHeatmap(
+              "correlation-matrix-container",
+              matrixData
+            );
+            console.log("Matrice de corrélation générée avec succès.");
+          } catch (error) {
+            console.error(
+              "Erreur lors de la génération de la matrice de corrélation :",
+              error
+            );
+          }
+        } else {
+          // Supprimer la heatmap si toutes les métriques ne sont pas sélectionnées
+          d3.select("#correlation-matrix-container").select("svg").remove();
+          console.warn("Toutes les métriques doivent être sélectionnées.");
+        }
+      });
+    });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Charger les données JSON
+    fetch("./data/hour.json")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Données JSON chargées :", data);
+        setupMetricSelection(data); // Configurer la sélection des métriques
+      })
+      .catch((error) => {
+        console.error("Erreur lors du chargement des données :", error);
+      });
+
+    function setupMetricSelection(data) {
+      const checkboxes = document.querySelectorAll(
+        "#checkbox-section input[type='checkbox']"
+      );
+      const selectedMetrics = new Set();
+
+      checkboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", () => {
+          const metric = checkbox.id.replace("-checkbox", ""); // Récupère le nom de la métrique
+
+          if (checkbox.checked) {
+            selectedMetrics.add(metric);
+          } else {
+            selectedMetrics.delete(metric);
+          }
+
+          console.log("Métriques sélectionnées :", selectedMetrics);
+
+          // Vérifier si exactement 3 métriques sont sélectionnées
+          if (selectedMetrics.size === 3) {
+            console.log(
+              "Trois métriques sélectionnées. Génération du graphique."
+            );
+            updateRankChart(data, Array.from(selectedMetrics)); // Mettre à jour le graphique
+          } else {
+            console.warn(
+              "Veuillez sélectionner exactement 3 métriques pour afficher le graphique."
+            );
+            d3.select("#rank-chart-container").select("svg").remove();
+          }
+        });
+      });
+    }
+
+    function updateRankChart(data, selectedMetrics) {
+      const filteredData = data.map((d) => {
+        const result = { fecha_servidor: d.fecha_servidor };
+        selectedMetrics.forEach((metric) => {
+          result[metric.toUpperCase()] =
+            d[`WORKSTATION_${metric.toUpperCase()}_POWER`] || 0;
+        });
+        return result;
+      });
+
+      console.log("Données filtrées :", filteredData);
+
+      createRankChangeChart(
+        "rank-chart-container",
+        filteredData,
+        selectedMetrics
+      );
+    }
+
+    function createRankChangeChart(containerId, data, metrics) {
+      console.log("Création du graphique de rang...");
+      d3.select(`#${containerId}`).select("svg").remove();
+
+      const margin = { top: 20, right: 20, bottom: 50, left: 50 };
+      const width = 600 - margin.left - margin.right;
+      const height = 400 - margin.top - margin.bottom;
+
+      const svg = d3
+        .select(`#${containerId}`)
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const parseDate = d3.timeParse("%Y-%m-%dT%H:%M:%S");
+      data.forEach((d) => {
+        d.fecha_servidor = parseDate(d.fecha_servidor);
+      });
+
+      const x = d3
+        .scaleTime()
+        .domain(d3.extent(data, (d) => d.fecha_servidor))
+        .range([0, width]);
+
+      const y = d3.scalePoint().domain([1, 2, 3]).range([0, height]);
+
+      const color = d3
+        .scaleOrdinal()
+        .domain(metrics)
+        .range(["#ff8c00", "#8c564b", "#1f77b4"]);
+
+      const rankData = metrics.map((metric) => ({
+        name: metric,
+        values: data.map((d) => ({
+          date: d.fecha_servidor,
+          rank: getRank(d, metrics, metric),
+        })),
+      }));
+
+      svg
+        .append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%d/%m")));
+
+      svg.append("g").call(d3.axisLeft(y));
+
+      rankData.forEach((metricData) => {
+        const line = d3
+          .line()
+          .x((d) => x(d.date))
+          .y((d) => y(d.rank))
+          .curve(d3.curveBasis);
+
+        svg
+          .append("path")
+          .datum(metricData.values)
+          .attr("fill", "none")
+          .attr("stroke", color(metricData.name))
+          .attr("stroke-width", 2)
+          .attr("d", line);
+      });
+
+      svg
+        .selectAll(".legend")
+        .data(metrics)
+        .enter()
+        .append("text")
+        .attr("x", width - 60)
+        .attr("y", (d, i) => 20 + i * 20)
+        .style("fill", (d) => color(d))
+        .style("font-size", "12px")
+        .style("font-weight", "bold")
+        .text((d) => d.toUpperCase());
+    }
+
+    function getRank(d, metrics, currentMetric) {
+      const values = metrics.map(
+        (metric) => d[`WORKSTATION_${metric.toUpperCase()}_POWER`] || 0
+      );
+      const sorted = [...values].sort((a, b) => b - a);
+      const rank =
+        sorted.indexOf(d[`WORKSTATION_${currentMetric.toUpperCase()}_POWER`]) +
+        1;
+      return rank;
+    }
   });
-
-  console.log("Matrice de corrélation :", matrix);
-  return { matrix, keys };
-}
-
-function pearsonCorrelation(x, y) {
-  const n = x.length;
-  const meanX = d3.mean(x);
-  const meanY = d3.mean(y);
-
-  const numerator = d3.sum(x.map((xi, i) => (xi - meanX) * (y[i] - meanY)));
-  const denominator = Math.sqrt(
-    d3.sum(x.map((xi) => Math.pow(xi - meanX, 2))) *
-      d3.sum(y.map((yi) => Math.pow(yi - meanY, 2)))
-  );
-
-  if (denominator === 0) return 0;
-
-  console.log("Corrélation calculée :", numerator / denominator);
-  return numerator / denominator;
-}
-
-function createCorrelationHeatmap(containerId, matrixData) {
-  const { matrix, keys } = matrixData;
-  const cellSize = 50; // Taille des cellules
-  const labelOffset = 100; // Espace pour les étiquettes
-  const width = cellSize * keys.length;
-  const height = cellSize * keys.length;
-
-  d3.select(`#${containerId}`).select("svg").remove();
-
-  const svg = d3
-    .select(`#${containerId}`)
-    .append("svg")
-    .attr("width", width + labelOffset + 50) // Ajustement pour les labels
-    .attr("height", chartsHeight) // Ajustement pour les labels
-    .append("g")
-    .attr("transform", `translate(${labelOffset}, ${labelOffset / 2})`);
-
-  const colorScale = d3
-    .scaleLinear()
-    .domain([-1, 0, 1])
-    .range(["#d73027", "#ffffbf", "#1a9850"]);
-
-  // Ajouter les cellules de la heatmap
-  svg
-    .selectAll("rect")
-    .data(matrix.flat())
-    .enter()
-    .append("rect")
-    .attr("x", (_, i) => (i % keys.length) * cellSize)
-    .attr("y", (_, i) => Math.floor(i / keys.length) * cellSize)
-    .attr("width", cellSize)
-    .attr("height", cellSize)
-    .style("fill", (d) => colorScale(d))
-    .style("stroke", "black");
-
-  // Ajouter les valeurs dans les cellules
-  svg
-    .selectAll("text.cell-value")
-    .data(matrix.flat())
-    .enter()
-    .append("text")
-    .attr("class", "cell-value")
-    .attr("x", (_, i) => (i % keys.length) * cellSize + cellSize / 2)
-    .attr("y", (_, i) => Math.floor(i / keys.length) * cellSize + cellSize / 2)
-    .attr("dy", ".35em")
-    .style("text-anchor", "middle")
-    .style("font-size", "14px")
-    .style("font-weight", "bold")
-    .style("fill", "black")
-    .text((d) => (d !== null ? d.toFixed(2) : "N/A"));
-
-  // Ajouter les labels des colonnes (axes X) en vertical
-  svg
-    .selectAll(".x-label")
-    .data(keys)
-    .enter()
-    .append("text")
-    .attr("x", (_, i) => i * cellSize + cellSize / 2)
-    .attr("y", -labelOffset / 2) // Placer en haut
-    .attr("text-anchor", "middle")
-    .attr("dominant-baseline", "middle")
-    .attr(
-      "transform",
-      (_, i) => `translate(${i * cellSize + cellSize / 2}, 0) rotate(-90)`
-    ) // Rotation à -90 degrés
-    .style("font-size", "14px")
-    .style("font-weight", "bold")
-    .text((d) => d.toUpperCase().replace(/_/g, " "));
-
-  // Ajouter les labels des lignes (axes Y)
-  svg
-    .selectAll(".y-label")
-    .data(keys)
-    .enter()
-    .append("text")
-    .attr("x", -10)
-    .attr("y", (_, i) => i * cellSize + cellSize / 2)
-    .attr("text-anchor", "end")
-    .attr("dominant-baseline", "middle")
-    .style("font-size", "14px")
-    .style("font-weight", "bold")
-    .text((d) => d.toUpperCase().replace(/_/g, " "));
-}
+});
