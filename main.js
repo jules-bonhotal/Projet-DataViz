@@ -930,7 +930,7 @@ initialize();
 function createStackedAreaChart(containerId, data) {
   d3.select(`#${containerId}`).select("svg").remove();
 
-  const margin = { top: 60, right: 30, bottom: 30, left: 60 }, // Augmentation de la marge supérieure
+  const margin = { top: 80, right: 150, bottom: 50, left: 60 }, // Ajout d'espace en haut et à droite
     width = 600 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
@@ -981,14 +981,14 @@ function createStackedAreaChart(containerId, data) {
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
   // Ajouter le titre en haut
-  svg
+  d3.select(`#${containerId} svg`)
     .append("text")
-    .attr("x", (width + margin.left + margin.right) / 2 - margin.left)
-    .attr("y", -margin.top / 2)
+    .attr("x", (width + margin.left + margin.right) / 2)
+    .attr("y", 30) // Position au-dessus du graphique
     .attr("text-anchor", "middle")
-    .style("font-size", "16px")
+    .style("font-size", "18px")
     .style("font-weight", "bold")
-    .text("Consommation d'énergie par composant (CPU, GPU, RAM)");
+    .text("Energy Consumption by Component (CPU, GPU, RAM)");
 
   // Ajouter une aire empilée
   const area = d3
@@ -1015,42 +1015,50 @@ function createStackedAreaChart(containerId, data) {
 
   svg.append("g").call(d3.axisLeft(y));
 
-  // Ajouter une légende
+  // Ajouter une légende (à droite du graphique)
   const legend = svg
-    .selectAll(".legend")
-    .data(color.domain())
-    .enter()
     .append("g")
     .attr("class", "legend")
-    .attr("transform", (d, i) => `translate(0,${i * 20})`);
+    .attr("transform", `translate(${width + 20}, 0)`); // Position à droite
 
+  // Ajouter les rectangles colorés de la légende
   legend
+    .selectAll("rect")
+    .data(color.domain())
+    .enter()
     .append("rect")
-    .attr("x", width - 18)
-    .attr("y", -20)
+    .attr("x", 0)
+    .attr("y", (_, i) => i * 25)
     .attr("width", 18)
     .attr("height", 18)
-    .style("fill", color);
+    .style("fill", (d) => color(d));
 
+  // Ajouter les labels de la légende
   legend
+    .selectAll("text")
+    .data(color.domain())
+    .enter()
     .append("text")
-    .attr("x", width - 24)
-    .attr("y", -10)
+    .attr("x", 25) // Décalage du texte par rapport aux rectangles
+    .attr("y", (_, i) => i * 25 + 9) // Alignement vertical
     .attr("dy", ".35em")
-    .style("text-anchor", "end")
+    .style("text-anchor", "start")
+    .style("font-size", "12px")
     .text((d) => d);
 
+  // Ajouter un message si les données sont vides ou nulles
   if (
     preparedData.length === 0 ||
     preparedData.every((d) => d.CPU === 0 && d.GPU === 0 && d.RAM === 0)
   ) {
     svg
       .append("text")
-      .attr("x", chartConfig.width / 2)
-      .attr("y", chartConfig.height / 2)
+      .attr("x", width / 2)
+      .attr("y", height / 2)
       .attr("text-anchor", "middle")
       .style("font-size", "14px")
-      .text("Aucune donnée disponible dans cette plage");
+      .style("fill", "red")
+      .text("No data available in this range");
     return;
   }
 }
