@@ -7,31 +7,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
     <title>Data Center Metrics Visualization</title>
+    <style>
+      .hidden {
+        display: none;
+      }
+    </style>
   </head>
   <body>
-    <div id="checkbox-section">
+    <div id="checkbox-section" class="hidden">
       <h3>Select Metrics</h3>
       <ul>
         <li>
-          <input type="checkbox" id="voltage-checkbox" />
+          <input type="checkbox" id="voltage-checkbox" checked />
           <div class="checkbox-wrapper">
             <label for="voltage-checkbox">Voltage (V)</label>
           </div>
         </li>
         <li>
-          <input type="checkbox" id="current-checkbox" />
+          <input type="checkbox" id="current-checkbox" checked />
           <div class="checkbox-wrapper">
             <label for="current-checkbox">Current (A)</label>
           </div>
         </li>
         <li>
-          <input type="checkbox" id="frequency-checkbox" />
+          <input type="checkbox" id="frequency-checkbox" checked />
           <div class="checkbox-wrapper">
             <label for="frequency-checkbox">Frequency - Hertz (Hz)</label>
           </div>
         </li>
         <li>
-          <input type="checkbox" id="energy-checkbox" />
+          <input type="checkbox" id="energy-checkbox" checked />
           <div class="checkbox-wrapper">
             <label for="energy-checkbox"
               >Active Energy - kilowatts per hour (KWh)</label
@@ -39,15 +44,15 @@
           </div>
         </li>
         <li>
-          <input type="checkbox" id="temperature-checkbox" />
+          <input type="checkbox" id="temperature-checkbox" checked />
           <div class="checkbox-wrapper">
             <label for="temperature-checkbox"
-              >ESP32 Temperature - Centigrade Degrees (Â°C)</label
+              >ESP32 Temperature - Centigrade Degrees (°C)</label
             >
           </div>
         </li>
         <li>
-          <input type="checkbox" id="consumption-checkbox" />
+          <input type="checkbox" id="consumption-checkbox" checked />
           <div class="checkbox-wrapper">
             <label for="consumption-checkbox"
               >Pourcentages de Consomation</label
@@ -58,6 +63,7 @@
     </div>
 
     <div id="time-selection-section">
+      <button id="toggle-checkbox-section">Toggle Metrics Selection</button>
       <h3>Select Time Span</h3>
       <div id="time-grid"></div>
       <!-- Grid for week selection -->
@@ -91,5 +97,22 @@
     <div id="correlation-matrix-container"></div>
     <div id="rank-visualization-container"></div>
     <script src="main.js"></script>
+    <script>
+      document
+        .getElementById("toggle-checkbox-section")
+        .addEventListener("click", () => {
+          const checkboxSection = document.getElementById("checkbox-section");
+          checkboxSection.classList.toggle("hidden");
+          const timeSelectionSection = document.getElementById(
+            "time-selection-section"
+          );
+          if (!checkboxSection.classList.contains("hidden")) {
+            timeSelectionSection.insertBefore(
+              checkboxSection,
+              timeSelectionSection.firstChild
+            );
+          }
+        });
+    </script>
   </body>
 </html>

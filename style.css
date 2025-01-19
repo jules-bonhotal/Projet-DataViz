@@ -133,6 +133,8 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
   border-color: var(--secondary-color);
 }
 
+
+
 /***********************TIME SELECITON*************************/
 
 /******** WEEK SELECTION ****************/

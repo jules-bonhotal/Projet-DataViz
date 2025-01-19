@@ -1067,6 +1067,15 @@ function createStackedAreaChart(containerId, data) {
 document.addEventListener("DOMContentLoaded", function () {
   const path = "./data/hour.json";
 
+    // Add to your existing initialization code
+  document.getElementById('toggle-metrics').addEventListener('click', function() {
+    const section = document.getElementById('checkbox-section');
+    const button = this;
+    section.classList.toggle('metrics-hidden');
+    button.classList.toggle('collapsed');
+    button.textContent = button.classList.contains('collapsed') ? '▶' : '▼';
+  });
+
   // Vérifier si toutes les métriques sont sélectionnées
   function areAllMetricsSelected() {
     const checkboxes = document.querySelectorAll(
