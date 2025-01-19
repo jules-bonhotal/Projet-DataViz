@@ -173,7 +173,7 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
 
 #time-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 5px;
   max-height: 500px;
   padding: 10px;
