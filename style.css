@@ -133,23 +133,37 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
   border-color: var(--secondary-color);
 }
 
-
-
 /***********************TIME SELECITON*************************/
 
 /******** WEEK SELECTION ****************/
 #time-selection-section {
+  display: inline-block;
+  vertical-align: top;
   width: 30%;
   padding: 10px;
   background: var(--background-light);
   border: 1px solid var(--secondary-color);
   border-radius: 5px;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-  display: inline-block;
-  vertical-align: top;
   height: auto;
-  width: auto;
   overflow: auto; /* Make the div scrollable if content exceeds the height */
+}
+
+/* Add a container to hold the calendar, timeline, and clock sections side by side */
+#time-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* Add a container to hold the timeline and clock sections vertically */
+#right-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
 }
 
 #time-selection-section h3 {
@@ -207,11 +221,10 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
 
 /************ TIMELINE ************/
 #timeline {
-  position: relative;
-  width: 100%;
   height: 80px;
   background-color: var(--wrapper-default-bg);
   border-radius: 15%;
+  margin-right: 20px;
 }
 
 .timeline-selection {
@@ -230,13 +243,12 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
 /************ CLOCK SELECTION **************/
 
 #clock-selection-section {
-  width: 30%;
   padding: 10px;
   background: var(--background-light);
   border: 1px solid var(--secondary-color);
   border-radius: 5px;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
+  margin-top: 0; /* Remove the top margin */
 }
 
 .clock-container {
