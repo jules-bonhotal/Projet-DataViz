@@ -13,10 +13,10 @@ const state = {
 const chartConfig = {
   margin: { top: 40, right: 30, bottom: 30, left: 60 },
   get width() {
-    return 460 - this.margin.left - this.margin.right;
+    return 280 - this.margin.left - this.margin.right;
   },
   get height() {
-    return 400 - this.margin.top - this.margin.bottom;
+    return 180 - this.margin.top - this.margin.bottom;
   },
 };
 
@@ -231,6 +231,40 @@ const createLineChart = (containerId, data, valueKey, color) => {
     return;
   }
 
+  const timeDifference = state.endTimestamp - state.startTimestamp;
+  let timeFormatl;
+  let ticksl;
+
+  if (timeDifference < 2 * 60 * 1000) { // Less than an hour
+    timeFormatl = "%M";
+    ticksl = d3.timeMinute.every(15);
+    console.log("Less than an hour");
+  } else if (timeDifference < 24 * 60 * 60 * 1000) { // Less than a day
+    timeFormatl = "%H:%M";
+    ticksl = d3.timeHour.every(2);
+    console.log("Less than a day");
+  } else if (timeDifference < 2 * 24 * 60 * 60 * 1000) { // Less than 2 days
+    timeFormatl = "%d/%m";
+    ticksl = d3.timeHour.every(12);
+    console.log("Less than 2 days");
+  } else if (timeDifference < 7 * 24 * 60 * 60 * 1000) { // Less than a week
+    timeFormatl = "%d/%m";
+    ticksl = d3.timeDay.every(1);
+    console.log("Less than a week");
+  } else if (timeDifference < 30 * 24 * 60 * 60 * 1000) { // Less than a month
+    timeFormatl = "%d/%m";
+    ticksl = d3.timeDay.every(6);
+    console.log("Less than a month");
+  } else if (timeDifference < 90 * 24 * 60 * 60 * 1000) { // Less than 3 months
+    timeFormatl = "%d/%m";
+    ticksl = d3.timeWeek.every(1);
+    console.log("Less than 3 months");
+  } else { // More than a month
+    timeFormatl = "%d/%m";
+    ticksl = d3.timeMonth.every(1);
+    console.log("More than a month");
+  }
+
   // X axis
   const x = d3
     .scaleTime()
@@ -240,7 +274,11 @@ const createLineChart = (containerId, data, valueKey, color) => {
   svg
     .append("g")
     .attr("transform", `translate(0, ${chartConfig.height})`)
-    .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%d/%m")));
+    .call(d3.axisBottom(x).tickFormat(d3.timeFormat(timeFormatl)).ticks(ticksl))
+    .selectAll("text")
+    .attr("transform", "rotate(-45)")
+    .style("font-size", "8px")
+    .style("text-anchor", "end")
 
   // Y axis
   const y = d3
@@ -931,8 +969,8 @@ function createStackedAreaChart(containerId, data) {
   d3.select(`#${containerId}`).select("svg").remove();
 
   const margin = { top: 80, right: 150, bottom: 50, left: 60 }, // Ajout d'espace en haut et à droite
-    width = 600 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+    width = 500 - margin.left - margin.right,
+    height = 360 - margin.top - margin.bottom;
 
   // Préparation des données
   const dateParser = d3.timeParse("%Y-%m-%dT%H:%M:%S");

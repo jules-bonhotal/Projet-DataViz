@@ -280,6 +280,5 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
 
 #line-chart-section {
   display: grid;
-  grid-template-columns: 1fr 2fr;
   margin-top: 20px;
 }
