@@ -166,6 +166,16 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
   flex: 1;
 }
 
+/* Hold calendar selection and heatmap vertically */
+#left-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+#time-selection-section {
+  width: 96%;
+}
 #time-selection-section h3 {
   color: var(--primary-color);
   margin-bottom: 10px;
@@ -281,4 +291,14 @@ input[type="checkbox"]:checked ~ .checkbox-wrapper::after {
 #line-chart-section {
   display: grid;
   margin-top: 20px;
+}
+
+#consumption-container {
+  display: flex;
+  align-items: center;
+}
+
+#chart-consumption {
+  display: flex;
+  justify-content: center;
 }
