@@ -63,11 +63,17 @@
     </div>
 
     <div id="time-container">
-      <div id="time-selection-section">
-        <button id="toggle-checkbox-section">Toggle Metrics Selection</button>
-        <h3>Select Time Span</h3>
-        <div id="time-grid"></div>
-        <!-- Grid for week selection -->
+      <div id="left-container">
+        <div id="time-selection-section">
+          <button id="toggle-checkbox-section">Toggle Metrics Selection</button>
+          <h3>Select Time Span</h3>
+          <div id="time-grid"></div>
+          <!-- Grid for week selection -->
+        </div>
+        <div id="consumption-container">
+          <div id="chart-consumption"></div>
+          <div id="stacked-area-chart-container"></div>
+        </div>
       </div>
       <div id="right-container">
         <div id="timeline-selection-section">
@@ -89,19 +95,15 @@
             </div>
           </div>
         </div>
-        <div id="stacked-area-chart-container"></div>
-
+        <div id="correlation-matrix-container"></div>
       </div>
       <div id="line-chart-section"></div>
     </div>
-
-
 
     <div id="stacked-area-chart"></div>
 
     <div id="line-chart-consumption-container"></div>
     <div id="line-chart-consumption"></div>
-    <div id="correlation-matrix-container"></div>
     <div id="rank-visualization-container"></div>
     <script src="main.js"></script>
     <script>
