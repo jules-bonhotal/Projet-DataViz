@@ -73,9 +73,9 @@ function getChartData(data) {
 }
 
 function createPieChart(containerId, data, colors) {
-  const width = 300;
-  const height = 300;
-  const margin = 20;
+  const width = 180;
+  const height = 180;
+  const margin = 0;
   const radius = Math.min(width, height) / 2 - margin;
 
   // Remove existing chart
@@ -123,7 +123,7 @@ function createPieChart(containerId, data, colors) {
     .text((d) => `${d.data[0]}: ${d.data[1]}%`) // d.data[0] is key, d.data[1] is value
     .attr("transform", (d) => `translate(${arc.centroid(d)})`)
     .style("text-anchor", "middle")
-    .style("font-size", "12px");
+    .style("font-size", "7px");
 
   // Handle no data case
   if (data.unknown === 100) {
@@ -133,7 +133,7 @@ function createPieChart(containerId, data, colors) {
       .attr("x", 0)
       .attr("y", 0)
       .attr("text-anchor", "middle")
-      .style("font-size", "14px")
+      .style("font-size", "8px")
       .text("No data available in this range");
     return; // Exit function early as no need to create a pie chart
   }
@@ -235,31 +235,38 @@ const createLineChart = (containerId, data, valueKey, color) => {
   let timeFormatl;
   let ticksl;
 
-  if (timeDifference < 2 * 60 * 1000) { // Less than an hour
+  if (timeDifference < 2 * 60 * 1000) {
+    // Less than an hour
     timeFormatl = "%M";
     ticksl = d3.timeMinute.every(15);
     console.log("Less than an hour");
-  } else if (timeDifference < 24 * 60 * 60 * 1000) { // Less than a day
+  } else if (timeDifference < 24 * 60 * 60 * 1000) {
+    // Less than a day
     timeFormatl = "%H:%M";
     ticksl = d3.timeHour.every(2);
     console.log("Less than a day");
-  } else if (timeDifference < 2 * 24 * 60 * 60 * 1000) { // Less than 2 days
+  } else if (timeDifference < 2 * 24 * 60 * 60 * 1000) {
+    // Less than 2 days
     timeFormatl = "%d/%m";
     ticksl = d3.timeHour.every(12);
     console.log("Less than 2 days");
-  } else if (timeDifference < 7 * 24 * 60 * 60 * 1000) { // Less than a week
+  } else if (timeDifference < 7 * 24 * 60 * 60 * 1000) {
+    // Less than a week
     timeFormatl = "%d/%m";
     ticksl = d3.timeDay.every(1);
     console.log("Less than a week");
-  } else if (timeDifference < 30 * 24 * 60 * 60 * 1000) { // Less than a month
+  } else if (timeDifference < 30 * 24 * 60 * 60 * 1000) {
+    // Less than a month
     timeFormatl = "%d/%m";
     ticksl = d3.timeDay.every(6);
     console.log("Less than a month");
-  } else if (timeDifference < 90 * 24 * 60 * 60 * 1000) { // Less than 3 months
+  } else if (timeDifference < 90 * 24 * 60 * 60 * 1000) {
+    // Less than 3 months
     timeFormatl = "%d/%m";
     ticksl = d3.timeWeek.every(1);
     console.log("Less than 3 months");
-  } else { // More than a month
+  } else {
+    // More than a month
     timeFormatl = "%d/%m";
     ticksl = d3.timeMonth.every(1);
     console.log("More than a month");
@@ -278,7 +285,7 @@ const createLineChart = (containerId, data, valueKey, color) => {
     .selectAll("text")
     .attr("transform", "rotate(-45)")
     .style("font-size", "8px")
-    .style("text-anchor", "end")
+    .style("text-anchor", "end");
 
   // Y axis
   const y = d3
@@ -845,6 +852,62 @@ const renderSystem = {
   async updateVisualizations() {
     try {
       const data = await fetchData(path);
+
+      /* Correlation Matrix */
+      const selectedMetrics = [
+        "voltaje",
+        "corriente",
+        "frecuencia",
+        "energia",
+        "fp",
+      ];
+
+      // à factoriser
+      const dateParser = d3.timeParse("%Y-%m-%dT%H:%M:%S");
+      const parsedData = data
+        .map((d) => {
+          const parsedDate = dateParser(d.fecha_servidor);
+          if (!parsedDate) {
+            console.warn("Invalid date:", d.fecha_servidor);
+            d["date"] = null; // Ensure `d["date"]` is always set, even if invalid
+          } else {
+            d["date"] = parsedDate;
+          }
+          return d;
+        })
+        .filter((d) => {
+          const inRange =
+            d["date"] &&
+            d["date"] >= state.startTimestamp &&
+            d["date"] <= state.endTimestamp;
+          return inRange;
+        });
+
+      const filteredData = getSelectedMetricsData(parsedData, selectedMetrics);
+      const matrixData = calculateCorrelationMatrix(
+        filteredData,
+        selectedMetrics
+      );
+
+      const matrixDataFull = calculateCorrelationMatrix(data, selectedMetrics);
+      console.log("Matrix", matrixDataFull);
+      const allCorrelations = matrixDataFull.matrix.flat(); // Aplatissez la matrice pour avoir toutes les valeurs
+      //console.log(allCorrelations);
+      const minCorrelation = d3.min(allCorrelations);
+      const maxCorrelation = d3.max(allCorrelations);
+      console.log("Corrélation Minimale Moyenne: ", minCorrelation);
+      console.log("Corrélation Maximale Moyenne: ", maxCorrelation);
+      createCorrelationHeatmap(
+        "correlation-matrix-container",
+        matrixData,
+        "",
+        minCorrelation,
+        maxCorrelation
+      );
+      console.log("Matrice de corrélation générée avec succès.");
+
+      /** Fin correlation matrix */
+
       Object.entries(metrics).forEach(([metric, config]) => {
         const checkbox = document.getElementById(`${metric}-checkbox`);
         const chartId = `chart-${metric}`;
@@ -968,9 +1031,9 @@ initialize();
 function createStackedAreaChart(containerId, data) {
   d3.select(`#${containerId}`).select("svg").remove();
 
-  const margin = { top: 80, right: 150, bottom: 50, left: 60 }, // Ajout d'espace en haut et à droite
-    width = 500 - margin.left - margin.right,
-    height = 360 - margin.top - margin.bottom;
+  const margin = { top: 80, right: 75, bottom: 50, left: 60 }, // Ajout d'espace en haut et à droite
+    width = 360 - margin.left - margin.right,
+    height = 280 - margin.top - margin.bottom;
 
   // Préparation des données
   const dateParser = d3.timeParse("%Y-%m-%dT%H:%M:%S");
@@ -989,6 +1052,46 @@ function createStackedAreaChart(containerId, data) {
       return inRange;
     });
 
+  const timeDifference = state.endTimestamp - state.startTimestamp;
+  let timeFormatl;
+  let ticksl;
+
+  if (timeDifference < 2 * 60 * 1000) {
+    // Less than an hour
+    timeFormatl = "%M";
+    ticksl = d3.timeMinute.every(15);
+    console.log("Less than an hour");
+  } else if (timeDifference < 24 * 60 * 60 * 1000) {
+    // Less than a day
+    timeFormatl = "%H:%M";
+    ticksl = d3.timeHour.every(2);
+    console.log("Less than a day");
+  } else if (timeDifference < 2 * 24 * 60 * 60 * 1000) {
+    // Less than 2 days
+    timeFormatl = "%d/%m";
+    ticksl = d3.timeHour.every(12);
+    console.log("Less than 2 days");
+  } else if (timeDifference < 7 * 24 * 60 * 60 * 1000) {
+    // Less than a week
+    timeFormatl = "%d/%m";
+    ticksl = d3.timeDay.every(1);
+    console.log("Less than a week");
+  } else if (timeDifference < 30 * 24 * 60 * 60 * 1000) {
+    // Less than a month
+    timeFormatl = "%d/%m";
+    ticksl = d3.timeDay.every(6);
+    console.log("Less than a month");
+  } else if (timeDifference < 90 * 24 * 60 * 60 * 1000) {
+    // Less than 3 months
+    timeFormatl = "%d/%m";
+    ticksl = d3.timeWeek.every(1);
+    console.log("Less than 3 months");
+  } else {
+    // More than a month
+    timeFormatl = "%d/%m";
+    ticksl = d3.timeMonth.every(1);
+    console.log("More than a month");
+  }
   // Création des échelles
   const x = d3
     .scaleTime()
@@ -1024,7 +1127,7 @@ function createStackedAreaChart(containerId, data) {
     .attr("x", (width + margin.left + margin.right) / 2)
     .attr("y", 30) // Position au-dessus du graphique
     .attr("text-anchor", "middle")
-    .style("font-size", "18px")
+    .style("font-size", "12px")
     .style("font-weight", "bold")
     .text("Energy Consumption by Component (CPU, GPU, RAM)");
 
@@ -1049,7 +1152,9 @@ function createStackedAreaChart(containerId, data) {
   svg
     .append("g")
     .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%d/%m")));
+    .call(
+      d3.axisBottom(x).tickFormat(d3.timeFormat(timeFormatl)).ticks(ticksl)
+    );
 
   svg.append("g").call(d3.axisLeft(y));
 
@@ -1094,14 +1199,193 @@ function createStackedAreaChart(containerId, data) {
       .attr("x", width / 2)
       .attr("y", height / 2)
       .attr("text-anchor", "middle")
-      .style("font-size", "14px")
+      .style("font-size", "8px")
       .style("fill", "red")
       .text("No data available in this range");
     return;
   }
 }
 
+/** Correlation Matrix */
 
+// Récupérer les données des métriques sélectionnées
+function getSelectedMetricsData(data, selectedMetrics) {
+  return data.map((d) =>
+    selectedMetrics.reduce((acc, metric) => {
+      acc[metric] = d[metric] || 0; // Remplace les valeurs nulles ou indéfinies par 0
+      return acc;
+    }, {})
+  );
+}
+
+// Calculer la matrice de corrélation
+function calculateCorrelationMatrix(data, selectedMetrics) {
+  const matrix = [];
+  const keys = selectedMetrics;
+
+  keys.forEach((key1, i) => {
+    matrix[i] = [];
+    keys.forEach((key2, j) => {
+      const x = data.map((d) => d[key1]);
+      const y = data.map((d) => d[key2]);
+
+      //console.log(`Calcul de la corrélation entre ${key1} et ${key2}`);
+      matrix[i][j] = pearsonCorrelation(x, y);
+    });
+  });
+
+  return { matrix, keys };
+}
+
+// Calculer la corrélation de Pearson
+function pearsonCorrelation(x, y) {
+  const n = x.length;
+  const meanX = d3.mean(x);
+  const meanY = d3.mean(y);
+
+  const numerator = d3.sum(x.map((xi, i) => (xi - meanX) * (y[i] - meanY)));
+  const denominator = Math.sqrt(
+    d3.sum(x.map((xi) => Math.pow(xi - meanX, 2))) *
+      d3.sum(y.map((yi) => Math.pow(yi - meanY, 2)))
+  );
+
+  return denominator === 0 ? 0 : numerator / denominator;
+}
+
+function createCorrelationHeatmap(
+  containerId,
+  matrixData,
+  title,
+  minCorr,
+  maxCorr
+) {
+  const { matrix, keys } = matrixData;
+  const cellSize = 25; // Adjusted cell size for better layout
+  const labelOffset = 90; // Increased space for labels
+  const titlePosX = cellSize * keys.length;
+  const height = cellSize * keys.length;
+
+  // Clear any existing heatmap
+  d3.select(`#${containerId}`).select("svg").remove();
+
+  const svg = d3
+    .select(`#${containerId}`)
+    .append("svg")
+    .attr("width", 300) // Extra space for better centering
+    .attr("height", 300) // Extra space for title and legend
+    .append("g")
+    .attr("transform", `translate(${labelOffset + 30}, ${labelOffset})`);
+
+  // Add title
+  d3.select(`#${containerId} svg`)
+    .append("text")
+    .attr("x", (titlePosX + 0 + 50) / 2)
+    .attr("y", 30) // More space above
+    .style("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("font-weight", "bold")
+    .text(title);
+
+  const colorScale = d3
+    .scaleLinear()
+    .domain([minCorr, 0.5 * (minCorr + maxCorr), maxCorr])
+    .range(["#d73027", "#ffffbf", "#1a9850"]);
+
+  // Add heatmap cells
+  svg
+    .selectAll("rect")
+    .data(matrix.flat())
+    .enter()
+    .append("rect")
+    .attr("x", (_, i) => (i % keys.length) * cellSize)
+    .attr("y", (_, i) => Math.floor(i / keys.length) * cellSize)
+    .attr("width", cellSize)
+    .attr("height", cellSize)
+    .style("fill", (d) => colorScale(d))
+    .style("stroke", "white");
+
+  // Add cell values
+  svg
+    .selectAll("text.cell-value")
+    .data(matrix.flat())
+    .enter()
+    .append("text")
+    .attr("class", "cell-value")
+    .attr("x", (_, i) => (i % keys.length) * cellSize + cellSize / 2)
+    .attr("y", (_, i) => Math.floor(i / keys.length) * cellSize + cellSize / 2)
+    .attr("dy", ".35em")
+    .style("text-anchor", "middle")
+    .style("font-size", "10px") // Smaller text
+    .style("font-weight", "bold")
+    .style("fill", "black")
+    .text((d) => (d !== null ? d.toFixed(2) : ""));
+
+  // Add X-axis labels (rotated)
+  svg
+    .selectAll(".x-label")
+    .data(keys)
+    .enter()
+    .append("text")
+    .attr("x", (_, i) => i * cellSize + cellSize / 2)
+    .attr("y", -5)
+    .attr(
+      "transform",
+      (_, i) => `rotate(90, ${i * cellSize + cellSize / 2}, -5)`
+    )
+    .style("text-anchor", "end")
+    .style("font-size", "10px")
+    .style("font-weight", "bold")
+    .text((d) => d.toUpperCase());
+
+  // Add Y-axis labels
+  svg
+    .selectAll(".y-label")
+    .data(keys)
+    .enter()
+    .append("text")
+    .attr("x", -10)
+    .attr("y", (_, i) => i * cellSize + cellSize / 2)
+    .attr("dy", ".35em")
+    .style("text-anchor", "end")
+    .style("font-size", "10px")
+    .style("font-weight", "bold")
+    .text((d) => d.toUpperCase());
+
+  // Add legend
+  const legend = svg
+    .append("g")
+    .attr("class", "legend")
+    .attr("transform", `translate(0, ${height + 20})`);
+
+  //const legendScale = [-1, -0.5, 0, 0.5, 1];
+  const legendScale = [minCorr, minCorr / 2, 0, maxCorr / 2, maxCorr];
+  const legendWidth = 30;
+
+  console.log(colorScale(maxCorr));
+  legend
+    .selectAll("rect")
+    .data(d3.range(legendScale.length))
+    .enter()
+    .append("rect")
+    .attr("x", (_, i) => i * legendWidth - 15)
+    .attr("width", legendWidth)
+    .attr("height", 10)
+    .style("fill", (_, i) => colorScale(legendScale[i]));
+
+  // Add legend labels
+  legend
+    .selectAll("text")
+    .data(legendScale)
+    .enter()
+    .append("text")
+    .attr("x", (_, i) => i * legendWidth)
+    .attr("y", 25)
+    .style("text-anchor", "middle")
+    .style("font-size", "10px")
+    .text((d) => d.toFixed(1));
+}
+
+/*
 document.addEventListener("DOMContentLoaded", function () {
   const path = "./data/hour.json";
 
@@ -1497,3 +1781,4 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     
 });
+*/
